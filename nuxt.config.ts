@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui', '@nuxtjs/supabase'],
+  modules: ['@nuxt/ui'],
   runtimeConfig: {
     supabaseKey: process.env.SUPABASE_KEY,
     // Quran Foundation OAuth2 credentials (server-side only)
