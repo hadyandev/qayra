@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const apiKey = config.qfApiKey
 
   try {
-    const response = await $fetch('https://api.quran.foundation/search', {
+    const response = await $fetch('https://api.quran.foundation/v1/search', {
       method: 'GET',
       headers: {
         'Authorization': apiKey ? `Bearer ${apiKey}` : undefined,
