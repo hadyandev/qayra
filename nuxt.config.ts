@@ -1,14 +1,11 @@
-
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxtjs/supabase'],
   runtimeConfig: {
     supabaseKey: process.env.SUPABASE_KEY,
-    qfClientId: process.env.QF_CLIENT_ID,
-    qfClientSecret: process.env.QF_CLIENT_SECRET,
-    qfRedirectUri: process.env.QF_REDIRECT_URI,
+    qfApiKey: process.env.QF_API_KEY,
     public: {
       supabaseUrl: process.env.SUPABASE_URL,
-      qfBase: process.env.QF_API_BASE_URL
+      qfBase: 'https://api.quran.foundation'
     }
   }
 })

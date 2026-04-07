@@ -1,56 +1,67 @@
 interface SearchResult {
   id: number
-  verse_key: string
   text: string
-  highlights?: string[]
+  verse_key: string
+  surah_name: string
+  translation?: string
 }
 
-interface VerseResponse {
-  verse: {
+interface VerseData {
+  id: number
+  verse_key: string
+  text_uthmani: string
+  text_imlaei: string
+  translations: { text: string; resource_name: string }[]
+  surah: {
     id: number
-    verse_key: string
-    text: string
-    translations?: Array<{
-      resource_id: number
-      text: string
-    }>
+    name_complex: string
+    name_simple: string
+    name_arabic: string
   }
 }
 
 export const useQuran = () => {
-  const config = useRuntimeConfig()
-  const qfBase = config.public.qfBase || 'https://api.quran.foundation'
+  const search = async (q: string): Promise<SearchResult[]> => {
+    if (!q || q.trim().length < 2) {
+      return []
+    }
 
-  const search = async (query: string): Promise<SearchResult[]> => {
-    if (!query.trim()) return []
-    
     try {
-      const response: any = await $fetch(`${qfBase}/api/v1/search`, {
-        params: { q: query },
-        headers: {
-          'Accept': 'application/json'
-        }
+      const response: any = await $fetch('/api/quran/search', {
+        query: { q: q.trim() }
       })
-      
+
+      if (response.error) {
+        console.error('Search error:', response.error)
+        return []
+      }
+
       return response.results || []
     } catch (error) {
-      console.error('Search error:', error)
-      throw error
+      console.error('Search fetch error:', error)
+      return []
     }
   }
 
-  const verse = async (key: string): Promise<VerseResponse | null> => {
+  const verse = async (key: string): Promise<VerseData | null> => {
+    if (!key) {
+      return null
+    }
+
     try {
-      const response: any = await $fetch(`${qfBase}/api/v4/verses/by_key/${key}`, {
-        headers: {
-          'Accept': 'application/json'
-        }
+      const response: any = await $fetch('/api/quran/verse', {
+        query: { key: key }
       })
-      
-      return response.verse || null
+
+      if (response.error) {
+        console.error('Verse error:', response.error)
+        return null
+      }
+
+      return response.verse || response
     } catch (error) {
       console.error('Verse fetch error:', error)
-      throw error
+      return null
     }
   }
 
