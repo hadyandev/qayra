@@ -1,20 +1,17 @@
 import { defineEventHandler, getQuery } from 'h3'
 
-// Reuse token from search endpoint (shared memory in same process)
-// In production, use Redis or proper shared cache
+// Token cache (shared with search)
 declare global {
-  var cachedQuranToken: string | null
-  var tokenQuranExpiry: number
+  var qfToken: string | null
+  var qfTokenExpiry: number
 }
 
-async function getQuranToken(config: any): Promise<string | null> {
-  // Return cached token if valid
-  if (global.cachedQuranToken && Date.now() < (global.tokenQuranExpiry || 0)) {
-    return global.cachedQuranToken
+async function getToken(config: any): Promise<string | null> {
+  if (global.qfToken && Date.now() < (global.qfTokenExpiry || 0)) {
+    return global.qfToken
   }
 
   try {
-    // OAuth2 Client Credentials flow
     const response = await fetch('https://prelive-oauth2.quran.foundation/oauth2/token', {
       method: 'POST',
       headers: {
@@ -25,17 +22,17 @@ async function getQuranToken(config: any): Promise<string | null> {
     })
 
     if (!response.ok) {
-      console.error('OAuth error:', await response.text())
+      const error = await response.text()
+      console.error('OAuth error:', error)
       return null
     }
 
     const data = await response.json()
-    global.cachedQuranToken = data.access_token
-    // Set expiry with 5-minute buffer
-    global.tokenQuranExpiry = Date.now() + (data.expires_in - 300) * 1000
-    return global.cachedQuranToken
+    global.qfToken = data.access_token
+    global.qfTokenExpiry = Date.now() + ((data.expires_in - 300) * 1000)
+    return global.qfToken
   } catch (error) {
-    console.error('Token fetch error:', error)
+    console.error('Token error:', error)
     return null
   }
 }
@@ -44,26 +41,19 @@ export default defineEventHandler(async (event) => {
   const key = getQuery(event).key as string
 
   if (!key) {
-    return {
-      error: 'Verse key is required',
-      verse: null,
-    }
+    return { error: 'Verse key is required', verse: null }
   }
 
   const config = useRuntimeConfig()
 
   try {
-    // Get OAuth token
-    const token = await getQuranToken(config)
+    const token = await getToken(config)
 
     if (!token) {
-      return {
-        error: 'Authentication failed - check QF_CLIENT_ID and QF_CLIENT_SECRET',
-        verse: null,
-      }
+      return { error: 'Failed to authenticate', verse: null }
     }
 
-    // Call Quran Foundation Verses API
+    // Call Verses API
     const response = await fetch(
       `https://apis-prelive.quran.foundation/v1/verses/by_key/${encodeURIComponent(key)}?language=en&translation=131`,
       {
@@ -75,26 +65,15 @@ export default defineEventHandler(async (event) => {
     )
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('QF API error:', errorText)
-      return {
-        error: `API error: ${response.status}`,
-        verse: null,
-      }
+      const error = await response.text()
+      console.error('Verse API error:', error)
+      return { error: `Verse fetch failed: ${response.status}`, verse: null }
     }
 
     const data = await response.json()
-
-    return {
-      verse: data,
-      key,
-    }
+    return { verse: data }
   } catch (error: any) {
     console.error('Verse error:', error)
-    return {
-      error: error.message || 'Failed to fetch verse',
-      verse: null,
-      key,
-    }
+    return { error: error.message || 'Failed to fetch verse', verse: null }
   }
 })
