@@ -20,6 +20,8 @@ interface VerseData {
   }
 }
 
+// Simple composable that calls server-side API endpoints
+// The server handles all Quran Foundation SDK authentication
 export const useQuran = () => {
   const search = async (q: string): Promise<SearchResult[]> => {
     if (!q || q.trim().length < 2) {
@@ -58,7 +60,7 @@ export const useQuran = () => {
         return null
       }
 
-      return response.verse || response
+      return response.verse || null
     } catch (error) {
       console.error('Verse fetch error:', error)
       return null

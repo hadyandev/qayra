@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^2.0.0",
+    "@quranjs/api": "^1.0.0",
     "@supabase/supabase-js": "^2.101.1",
     "nuxt": "^3.10.0"
   }
