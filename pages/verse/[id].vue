@@ -71,10 +71,55 @@
         <h3 class="text-xl font-semibold">Previous Reflections</h3>
         
         <UCard v-for="r in list" :key="r.id" class="bg-gray-50">
-          <p class="text-gray-800 whitespace-pre-wrap">{{ r.content }}</p>
-          <p class="text-sm text-gray-500 mt-2">
-            {{ new Date(r.created_at).toLocaleDateString() }}
-          </p>
+          <div v-if="editingId === r.id" class="space-y-3">
+            <UTextarea 
+              v-model="editContent" 
+              :rows="3"
+              class="w-full"
+            />
+            <div class="flex gap-2">
+              <UButton 
+                @click="saveEdit(r.id)" 
+                :loading="savingEdit"
+                size="sm"
+                color="emerald"
+              >
+                {{ savingEdit ? 'Saving...' : 'Save' }}
+              </UButton>
+              <UButton 
+                @click="cancelEdit" 
+                size="sm"
+                variant="ghost"
+              >
+                Cancel
+              </UButton>
+            </div>
+          </div>
+          
+          <div v-else>
+            <p class="text-gray-800 whitespace-pre-wrap">{{ r.content }}</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="text-sm text-gray-500">
+                {{ new Date(r.created_at).toLocaleDateString() }}
+                <span v-if="r.is_published" class="text-emerald-600 ml-2">✓ Published</span>
+              </p>
+              <div class="flex gap-2">
+                <UButton 
+                  @click="startEdit(r)" 
+                  size="xs"
+                  variant="ghost"
+                  icon="i-heroicons-pencil-square"
+                />
+                <UButton 
+                  @click="confirmDelete(r.id)" 
+                  size="xs"
+                  variant="ghost"
+                  color="red"
+                  icon="i-heroicons-trash"
+                />
+              </div>
+            </div>
+          </div>
         </UCard>
       </div>
     </div>
@@ -99,6 +144,10 @@ const text = ref('')
 const publish = ref(false)
 const saving = ref(false)
 const list = ref<Array<{id: string, content: string, created_at: string}>>([])
+
+const editingId = ref<string | null>(null)
+const editContent = ref('')
+const savingEdit = ref(false)
 
 const { verse } = useQuran()
 const supabase = useSupabase()
@@ -157,6 +206,50 @@ const save = async () => {
     error.value = err.message || 'Failed to save reflection'
   } finally {
     saving.value = false
+  }
+}
+
+const startEdit = (reflection: any) => {
+  editingId.value = reflection.id
+  editContent.value = reflection.content
+}
+
+const cancelEdit = () => {
+  editingId.value = null
+  editContent.value = ''
+}
+
+const saveEdit = async (id: string) => {
+  if (!editContent.value.trim()) return
+  
+  savingEdit.value = true
+  try {
+    await $fetch(`/api/reflection/${id}`, {
+      method: 'PUT',
+      body: { content: editContent.value }
+    })
+    
+    editingId.value = null
+    editContent.value = ''
+    await loadReflections()
+  } catch (err: any) {
+    error.value = err.message || 'Failed to update reflection'
+  } finally {
+    savingEdit.value = false
+  }
+}
+
+const confirmDelete = async (id: string) => {
+  if (!confirm('Delete this reflection?')) return
+  
+  try {
+    await $fetch(`/api/reflection/${id}`, {
+      method: 'DELETE'
+    })
+    
+    await loadReflections()
+  } catch (err: any) {
+    error.value = err.message || 'Failed to delete reflection'
   }
 }
 </script>

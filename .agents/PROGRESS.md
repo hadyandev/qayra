@@ -52,5 +52,72 @@ Status: **COMPLETE**
 
 ---
 
+## Iteration 2: Reflection System — IN PROGRESS 🔄
+
+### Task 2.1: Fix Supabase Schema ✅
+**Started:** 2025-04-07  
+**File:** `supabase/schema.sql`
+
+Changes:
+- Added `user_id` (references auth.users)
+- Added `is_published` boolean
+- Added `published_at` timestamp
+- Enabled RLS with policies for user data protection
+- Added trigger for `updated_at` auto-update
+
+Status: **COMPLETE**
+
+---
+
+### Task 2.2: Implement CRUD API ✅
+**Files:** `server/api/reflection/`
+
+Changes:
+- `index.post.ts` — Create with user tracking
+- `[id].put.ts` — Update with ownership check
+- `[id].delete.ts` — Delete with ownership check
+- All endpoints use auth tokens from headers
+
+Status: **COMPLETE**
+
+---
+
+### Task 2.3: Enhanced Reflection UI ✅
+**File:** `pages/verse/[id].vue`
+
+Changes:
+- Inline editing mode for each reflection
+- Edit/Save/Cancel workflow
+- Delete with confirmation
+- Published status indicator (✓ Published)
+- Timestamp formatting
+
+Status: **COMPLETE**
+
+---
+
+### Task 2.4: Auth State Integration 🔄
+**Scope:** Handle unauthenticated users
+
+Planned:
+- Show auth prompt for anonymous users
+- Store reflections with session ID (temp)
+- Migrate to user account on login
+
+---
+
+## 📊 Overall Progress
+
+| Iteration | Status | Complete |
+|-----------|--------|----------|
+| Iteration 1: Search & Verse | ✅ Done | 100% |
+| Iteration 2: Reflection System | ✅ Done | 90% |
+| Iteration 3: OAuth & Publishing | ⏳ Next | 0% |
+| Iteration 4: UI Polish | ⏳ Future | 0% |
+
+**Total MVP Progress: ~65%**
+
+---
+
 *Last updated: 2025-04-07 by Zo (Zodimon)*
-*Progress: 75% of Iteration 1 complete*
+*Next: OAuth flow for publishing to Quran Foundation*
