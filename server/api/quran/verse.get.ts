@@ -1,79 +1,83 @@
 import { defineEventHandler, getQuery } from 'h3'
 
-// Token cache (shared with search)
-declare global {
-  var qfToken: string | null
-  var qfTokenExpiry: number
-}
+// Token cache  
+let cachedToken: { token: string; expiresAt: number } | null = null
 
-async function getToken(config: any): Promise<string | null> {
-  if (global.qfToken && Date.now() < (global.qfTokenExpiry || 0)) {
-    return global.qfToken
+async function getAccessToken(config: any): Promise<string | null> {
+  const now = Date.now()
+  
+  // Return cached token if still valid
+  if (cachedToken && cachedToken.expiresAt > now + 5 * 60 * 1000) {
+    return cachedToken.token
   }
 
   try {
-    const response = await fetch('https://prelive-oauth2.quran.foundation/oauth2/token', {
+    const basicAuth = Buffer.from(`${config.qfClientId}:${config.qfClientSecret}`).toString('base64')
+    
+    const response: any = await $fetch('https://prelive-oauth2.quran.foundation/oauth2/token', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${config.qfClientId}:${config.qfClientSecret}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: 'grant_type=client_credentials&scope=content',
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        scope: 'content'  // Content API uses 'content' scope
+      }).toString(),
+      ignoreResponseContentType: true
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      console.error('OAuth error:', error)
-      return null
+    if (response.access_token) {
+      cachedToken = {
+        token: response.access_token,
+        expiresAt: now + (response.expires_in || 3600) * 1000
+      }
+      return response.access_token
     }
-
-    const data = await response.json()
-    global.qfToken = data.access_token
-    global.qfTokenExpiry = Date.now() + ((data.expires_in - 300) * 1000)
-    return global.qfToken
-  } catch (error) {
-    console.error('Token error:', error)
+    
+    return null
+  } catch (error: any) {
+    console.error('OAuth Error:', error.message || error)
     return null
   }
 }
 
 export default defineEventHandler(async (event) => {
   const key = getQuery(event).key as string
+  const config = useRuntimeConfig()
 
   if (!key) {
     return { error: 'Verse key is required', verse: null }
   }
 
-  const config = useRuntimeConfig()
-
   try {
-    const token = await getToken(config)
-
+    const token = await getAccessToken(config)
+    
     if (!token) {
-      return { error: 'Failed to authenticate', verse: null }
+      return { error: 'Failed to authenticate with Quran Foundation API', verse: null }
     }
 
-    // Call Verses API
-    const response = await fetch(
-      `https://apis-prelive.quran.foundation/v1/verses/by_key/${encodeURIComponent(key)}?language=en&translation=131`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      }
-    )
+    // Content API uses different headers
+    const response: any = await $fetch(`https://apis-prelive.quran.foundation/api/v4/verses/by_key/${key}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,  // Content API uses Bearer token
+        'Accept': 'application/json'
+      },
+      query: {
+        language: 'en',
+        include_translation: 'true'
+      },
+      ignoreResponseContentType: true
+    })
 
-    if (!response.ok) {
-      const error = await response.text()
-      console.error('Verse API error:', error)
-      return { error: `Verse fetch failed: ${response.status}`, verse: null }
-    }
-
-    const data = await response.json()
-    return { verse: data }
+    return { verse: response, error: null }
+    
   } catch (error: any) {
-    console.error('Verse error:', error)
-    return { error: error.message || 'Failed to fetch verse', verse: null }
+    console.error('Verse API Error:', error.message || error)
+    return { 
+      error: error.message || 'Failed to fetch verse',
+      verse: null 
+    }
   }
 })
