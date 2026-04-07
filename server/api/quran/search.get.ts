@@ -12,16 +12,15 @@ async function getAuthToken(config: any) {
 
   try {
     // OAuth2 token endpoint
-    const tokenResponse: any = await $fetch('https://oauth2.quran.foundation/token', {
+    const tokenResponse: any = await $fetch('https://prelive-oauth2.quran.foundation/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${config.qfClientId}:${config.qfClientSecret}`).toString('base64')}`
       },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: config.qfClientId,
-        client_secret: config.qfClientSecret,
-        scope: 'search'
+        scope: 'content'
       }).toString()
     })
 
