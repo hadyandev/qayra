@@ -1,16 +1,12 @@
 import type { H3Event } from 'h3'
 
 export default defineEventHandler(async (event: H3Event) => {
-  const config = useRuntimeConfig()
-  
   try {
-    // Call Quran Foundation Content API (Chapters endpoint)
-    // Content API does NOT require special OAuth2 scopes
-    const response = await $fetch('https://api.quran.foundation/v4/chapters', {
+    // Call Quran.com API (public, no auth needed)
+    const response = await $fetch('https://api.quran.com/api/v4/chapters', {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'X-Client-ID': config.qfClientId
+        'Accept': 'application/json'
       }
     })
 
@@ -25,9 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
       revelation_place: chapter.revelation_place
     }))
 
-    return {
-      chapters
-    }
+    return { chapters }
   } catch (error: any) {
     console.error('Chapters API error:', error)
     return {
