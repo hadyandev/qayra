@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Use Quran.com API (public, no auth needed)
-    // Note: Using /quran/verses/{key} for full verse text
+    // Note: This API returns verses from the requested key onwards
     const response: any = await $fetch(`https://api.quran.com/api/v4/quran/verses/${key}`, {
       method: 'GET',
       headers: {
@@ -21,7 +21,12 @@ export default defineEventHandler(async (event) => {
       return { error: 'Verse not found', verse: null }
     }
 
-    const verseData = response.verses[0]
+    // Filter to find the exact verse requested (API returns from key onwards)
+    const verseData = response.verses.find((v: any) => v.verse_key === key)
+    
+    if (!verseData) {
+      return { error: 'Verse not found', verse: null }
+    }
 
     // Transform response
     const verse = {
