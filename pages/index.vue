@@ -1,82 +1,93 @@
 <template>
   <div class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-8 text-center">Qayra — Quran Reflection</h1>
+    <h1 class="text-3xl font-bold mb-2 text-center">Qayra</h1>
+    <p class="text-center text-gray-500 mb-8">Quran Reflection System</p>
     
-    <div class="flex gap-2 mb-8">
-      <UInput 
-        v-model="q" 
-        placeholder="Search Quran (e.g., 'mercy', 'prayer')..." 
-        class="flex-1"
-        @keyup.enter="run"
-      />
-      <UButton 
-        @click="run" 
-        :loading="loading"
-        :disabled="loading || !q.trim()"
-      >
-        {{ loading ? 'Searching...' : 'Search' }}
-      </UButton>
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-12">
+      <UIcon name="i-heroicons-arrow-path" class="animate-spin text-4xl text-emerald-600" />
+      <p class="text-gray-500 mt-4">Loading Surah list...</p>
     </div>
 
+    <!-- Error State -->
     <UAlert
-      v-if="error"
+      v-else-if="error"
       color="red"
       variant="solid"
       class="mb-4"
-      :title="'Search Error'"
+      :title="'Error Loading Surah'"
       :description="error"
     />
 
-    <div v-if="results.length > 0" class="space-y-4">
-      <h2 class="text-lg font-semibold text-gray-600">{{ results.length }} Results</h2>
-      
-      <UCard v-for="r in results" :key="r.id" class="hover:shadow-lg transition-shadow">
-        <NuxtLink :to="`/verse/${r.verse_key}`" class="block">
-          <div class="flex items-start gap-4">
-            <span class="text-2xl font-arabic text-emerald-600">{{ r.verse_key }}</span>
-            <div class="flex-1">
-              <p class="text-gray-800 line-clamp-2">{{ r.text }}</p>
-              <p class="text-sm text-gray-500 mt-1">Click to reflect →</p>
+    <!-- Surah Grid -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <UCard 
+        v-for="surah in chapters" 
+        :key="surah.id"
+        class="hover:shadow-lg transition-shadow cursor-pointer"
+        @click="navigateTo(`/verse/${surah.id}:1`)"
+      >
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+            {{ surah.id }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-semibold text-gray-900 truncate">{{ surah.name_simple }}</h3>
+            <p class="text-sm text-gray-500">{{ surah.translated_name }}</p>
+            <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
+              <span>{{ surah.verses_count }} verses</span>
+              <span>•</span>
+              <span class="capitalize">{{ surah.revelation_place }}</span>
             </div>
           </div>
-        </NuxtLink>
+          <div class="text-2xl font-arabic text-emerald-600">
+            {{ surah.name_arabic }}
+          </div>
+        </div>
       </UCard>
     </div>
 
-    <div v-else-if="searched && !loading" class="text-center text-gray-500 py-8">
-      No results found. Try a different search term.
-    </div>
-
-    <div v-if="!searched" class="text-center text-gray-400 py-12">
-      <p class="mb-2">Enter a word or phrase to search the Quran</p>
-      <p class="text-sm">Try: mercy, prayer, guidance, light, patience</p>
+    <!-- Note about Search -->
+    <div class="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
+      <div class="flex items-start gap-3">
+        <UIcon name="i-heroicons-information-circle" class="text-amber-600 text-xl mt-0.5" />
+        <div>
+          <p class="text-sm text-amber-800">
+            <strong>Note:</strong> Direct search requires special API access approval from Quran Foundation. 
+            For now, browse Surah by clicking above. Search feature will be added once approved.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const q = ref('')
-const results = ref<Array<{id: number, verse_key: string, text: string}>>([])
-const loading = ref(false)
+const chapters = ref<Array<{
+  id: number
+  name_simple: string
+  name_complex: string
+  name_arabic: string
+  translated_name: string
+  verses_count: number
+  revelation_place: string
+}>>([])
+
+const loading = ref(true)
 const error = ref('')
-const searched = ref(false)
 
-const { search } = useQuran()
+const { chapters: getChapters } = useQuran()
 
-const run = async () => {
-  if (!q.value.trim()) return
-  
-  loading.value = true
-  error.value = ''
-  searched.value = true
-  
+onMounted(async () => {
   try {
-    results.value = await search(q.value)
+    chapters.value = await getChapters()
+    if (chapters.value.length === 0) {
+      error.value = 'Failed to load Surah list. Please refresh the page.'
+    }
   } catch (err: any) {
-    error.value = err.message || 'Failed to search. Please try again.'
-    results.value = []
+    error.value = err.message || 'Failed to load Surah list'
   } finally {
     loading.value = false
   }
-}
+})
 </script>
