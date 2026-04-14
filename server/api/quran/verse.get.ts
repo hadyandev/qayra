@@ -1,14 +1,6 @@
 import { getQuery } from 'h3'
 import { qfFetchJson } from '../../utils/qfHttp'
 
-function parseTranslationIds(config: ReturnType<typeof useRuntimeConfig>): number[] {
-  const raw = (config.qfTranslationIds as string) || '20'
-  return raw
-    .split(',')
-    .map((s) => parseInt(s.trim(), 10))
-    .filter((n) => !Number.isNaN(n))
-}
-
 export default defineEventHandler(async (event) => {
   const key = getQuery(event).key as string
   const config = useRuntimeConfig()
@@ -18,46 +10,47 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const translationIds = parseTranslationIds(config)
+    const translationIds = (config.qfTranslationIds as string) || '20'
     const path = `/content/api/v4/verses/by_key/${encodeURIComponent(key)}`
-    const data = await qfFetchJson<Record<string, unknown>>(
+    const data = await qfFetchJson<{
+      verse?: Record<string, unknown>
+    }>(
       path,
       {
-        translations: translationIds.join(',')
+        translations: translationIds,
+        fields: 'verse_key,text_uthmani,text_imlaei_simple,translations,chapter'
       },
       'content'
     )
 
-    const verse = (data.verse ?? data) as Record<string, unknown>
-    if (!verse || verse.verseKey == null) {
+    const verse = data.verse
+    if (!verse) {
       return { error: 'Verse not found', verse: null }
     }
 
     const translationsRaw = (verse.translations as Record<string, unknown>[]) || []
     const translations = translationsRaw.map((t) => ({
       text: String(t.text ?? ''),
-      resource_name: String(t.resourceName ?? t.resource_name ?? '')
+      resource_name: String(t.resource_name ?? t.resourceName ?? '')
     }))
 
-    const surahRaw = (verse.chapter ?? verse.surah) as Record<string, unknown> | undefined
+    const chapterRaw = verse.chapter as Record<string, unknown> | undefined
 
-    const arabic = String(
-      verse.textUthmani ?? verse.text_uthmani ?? verse.text ?? ''
-    )
     return {
       verse: {
         id: verse.id,
-        verse_key: String(verse.verseKey ?? verse.verse_key ?? key),
-        text: arabic,
-        text_uthmani: arabic,
-        text_imlaei: String(verse.textImlaei ?? verse.text_imlaei ?? ''),
+        verse_key: String(verse.verse_key ?? key),
+        text: String(verse.text_uthmani ?? verse.text ?? ''),
+        text_uthmani: String(verse.text_uthmani ?? ''),
+        text_imlaei_simple: String(verse.text_imlaei_simple ?? ''),
         translations,
-        surah: surahRaw
+        chapter_id: chapterRaw ? Number(chapterRaw.id) : undefined,
+        surah: chapterRaw
           ? {
-              id: Number(surahRaw.id),
-              name_complex: String(surahRaw.nameComplex ?? surahRaw.name_complex ?? ''),
-              name_simple: String(surahRaw.nameSimple ?? surahRaw.name_simple ?? ''),
-              name_arabic: String(surahRaw.nameArabic ?? surahRaw.name_arabic ?? '')
+              id: Number(chapterRaw.id),
+              name_complex: String(chapterRaw.name_complex ?? ''),
+              name_simple: String(chapterRaw.name_simple ?? ''),
+              name_arabic: String(chapterRaw.name_arabic ?? '')
             }
           : null
       },

@@ -4,12 +4,20 @@ type QfScope = 'content' | 'search'
 
 const tokenCache: Partial<Record<QfScope, { token: string; expiresAt: number }>> = {}
 
+interface TokenResponse {
+  access_token?: string
+  expires_in?: number
+  error?: string
+  error_description?: string
+}
+
 export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
   const config = useRuntimeConfig()
   const id = config.qfClientId as string | undefined
   const secret = config.qfClientSecret as string | undefined
+  
   if (!id || !secret) {
-    console.error('QF_CLIENT_ID / QF_CLIENT_SECRET missing')
+    console.error('QF OAuth Error: Missing QF_CLIENT_ID or QF_CLIENT_SECRET')
     return null
   }
 
@@ -22,22 +30,26 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
   const tokenUrl =
     (config.qfOAuthTokenUrl as string | undefined) ||
     'https://prelive-oauth2.quran.foundation/oauth2/token'
-  const basicAuth = Buffer.from(`${id}:${secret}`).toString('base64')
 
   try {
-    const response = await $fetch<{ access_token?: string; expires_in?: number }>(tokenUrl, {
+    const response = await $fetch<TokenResponse>(tokenUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${basicAuth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`
       },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        scope
-      }).toString()
+      body: `grant_type=client_credentials&scope=${scope}`
     })
 
-    if (!response.access_token) return null
+    if (response.error) {
+      console.error('QF OAuth Error:', response.error, response.error_description)
+      return null
+    }
+
+    if (!response.access_token) {
+      console.error('QF OAuth Error: No access token in response')
+      return null
+    }
 
     tokenCache[scope] = {
       token: response.access_token,
@@ -45,7 +57,10 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
     }
     return response.access_token
   } catch (e: any) {
-    console.error('QF OAuth error:', e?.message || e)
+    console.error('QF OAuth Error:', e?.message || e)
+    if (e?.data) {
+      console.error('QF OAuth Error Details:', JSON.stringify(e.data))
+    }
     return null
   }
 }
@@ -59,6 +74,7 @@ export async function qfFetchJson<T>(
   const id = config.qfClientId as string | undefined
   const base = (config.qfApiBase as string | undefined) || 'https://apis-prelive.quran.foundation'
   const token = await getQfAccessToken(scope)
+  
   if (!token || !id) {
     throw new Error('Quran Foundation authentication failed')
   }

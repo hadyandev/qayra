@@ -1,23 +1,69 @@
 <template>
-  <div class="max-w-md mx-auto p-8">
-    <h1 class="text-2xl font-bold mb-2">Sign in</h1>
-    <p class="text-stone-500 mb-6 text-sm">We’ll email you a magic link (Supabase Auth).</p>
+  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950 flex items-center justify-center px-6">
+    <div class="w-full max-w-md">
+      <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-[2rem] p-8 md:p-10 ring-1 ring-stone-200/30 dark:ring-stone-800/30">
+        <header class="text-center mb-10">
+          <div class="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-4">
+            <UIcon name="i-heroicons-envelope" class="w-6 h-6 text-[#52525B] dark:text-stone-400" />
+          </div>
+          <h1 class="text-3xl font-light text-[#18181B] dark:text-stone-100 tracking-tight mb-2">
+            Welcome back
+          </h1>
+          <p class="text-[#52525B] dark:text-stone-400">
+            Sign in to access your reflections
+          </p>
+        </header>
 
-    <UForm :state="state" @submit="onSubmit" class="space-y-4">
-      <UFormGroup label="Email" name="email">
-        <UInput v-model="state.email" type="email" autocomplete="email" required />
-      </UFormGroup>
-      <UButton type="submit" block :loading="pending" color="emerald">
-        Send magic link
-      </UButton>
-    </UForm>
+        <form @submit.prevent="onSubmit" class="space-y-6">
+          <div class="space-y-1.5">
+            <label for="email" class="text-sm font-medium text-[#18181B] dark:text-stone-200">Email</label>
+            <input
+              id="email"
+              v-model="state.email"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="you@example.com"
+              class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:focus:ring-amber-400/30 transition-all duration-300"
+            />
+          </div>
 
-    <UAlert v-if="message" class="mt-4" color="emerald" variant="soft" :title="message" />
-    <UAlert v-if="err" class="mt-4" color="red" variant="soft" :title="err" />
+          <button 
+            type="submit" 
+            :disabled="pending"
+            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-full font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+          >
+            <UIcon v-if="pending" name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
+            <span>{{ pending ? 'Sending link...' : 'Send magic link' }}</span>
+          </button>
+        </form>
 
-    <p class="mt-6 text-center text-sm text-stone-500">
-      <NuxtLink to="/" class="text-emerald-600 hover:underline">← Home</NuxtLink>
-    </p>
+        <div v-if="message" class="mt-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl px-4 py-3">
+          <div class="flex items-start gap-3">
+            <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+            <p class="text-sm text-emerald-700 dark:text-emerald-400">{{ message }}</p>
+          </div>
+        </div>
+
+        <div v-if="err" class="mt-6 bg-red-50 dark:bg-red-950/30 border border-red-200/60 dark:border-red-800/60 rounded-xl px-4 py-3">
+          <div class="flex items-start gap-3">
+            <UIcon name="i-heroicons-exclamation-circle" class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+            <p class="text-sm text-red-700 dark:text-red-400">{{ err }}</p>
+          </div>
+        </div>
+
+        <p class="mt-8 text-center text-sm text-[#52525B] dark:text-stone-500">
+          No password needed. We'll send a link to your inbox.
+        </p>
+      </div>
+
+      <p class="mt-8 text-center">
+        <NuxtLink to="/" class="inline-flex items-center gap-2 text-sm text-[#52525B] dark:text-stone-400 hover:text-[#18181B] dark:hover:text-stone-100 transition-colors duration-300 group">
+          <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+          Back to home
+        </NuxtLink>
+      </p>
+    </div>
   </div>
 </template>
 
@@ -36,12 +82,13 @@ async function onSubmit() {
   pending.value = true
   try {
     const redirect = `${globalThis.location.origin}/confirm`
-    const { error } = await client.auth.signInWithOtp({
+    const { error: authError } = await client.auth.signInWithOtp({
       email: state.email.trim(),
       options: { emailRedirectTo: redirect }
     })
-    if (error) throw error
+    if (authError) throw authError
     message.value = 'Check your inbox for the login link.'
+    state.email = ''
   } catch (e: any) {
     err.value = e?.message || 'Sign-in failed'
   } finally {

@@ -1,13 +1,13 @@
 import { qfFetchJson } from '../../utils/qfHttp'
 
 function mapChapter(raw: Record<string, unknown>) {
-  const translated = raw.translatedName as Record<string, string> | undefined
+  const translatedName = raw.translatedName as Record<string, string> | undefined
   return {
     id: Number(raw.id),
-    name_simple: (raw.nameSimple ?? raw.name_simple ?? '') as string,
-    name_complex: (raw.nameComplex ?? raw.name_complex ?? '') as string,
-    name_arabic: (raw.nameArabic ?? raw.name_arabic ?? '') as string,
-    translated_name: translated?.name ?? (raw.translated_name as string) ?? '',
+    name_simple: String(raw.nameSimple ?? raw.name_simple ?? ''),
+    name_complex: String(raw.nameComplex ?? raw.name_complex ?? ''),
+    name_arabic: String(raw.nameArabic ?? raw.name_arabic ?? ''),
+    translated_name: translatedName?.name ?? '',
     verses_count: Number(raw.versesCount ?? raw.verses_count ?? 0),
     revelation_place: String(raw.revelationPlace ?? raw.revelation_place ?? '')
   }
@@ -15,18 +15,19 @@ function mapChapter(raw: Record<string, unknown>) {
 
 export default defineEventHandler(async () => {
   try {
-    const data = await qfFetchJson<Record<string, unknown>>(
+    const data = await qfFetchJson<{
+      chapters?: Record<string, unknown>[]
+      result?: Record<string, unknown>[]
+    }>(
       '/content/api/v4/chapters',
       undefined,
       'content'
     )
-    const list =
-      (data.chapters as Record<string, unknown>[]) ||
-      (data.result as Record<string, unknown>[]) ||
-      (Array.isArray(data) ? (data as Record<string, unknown>[]) : null)
 
-    if (!list || !Array.isArray(list)) {
-      console.error('QF chapters unexpected shape', Object.keys(data || {}))
+    const list = data.chapters || data.result || []
+
+    if (!Array.isArray(list)) {
+      console.error('QF chapters unexpected shape', JSON.stringify(data).slice(0, 200))
       return { chapters: [], error: 'Unexpected chapters response' }
     }
 

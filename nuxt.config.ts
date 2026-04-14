@@ -21,8 +21,7 @@ export default defineNuxtConfig({
     qfOAuthTokenUrl:
       process.env.QF_OAUTH_TOKEN_URL ||
       'https://prelive-oauth2.quran.foundation/oauth2/token',
-    /** Default translation resource id(s) for verse fetch (comma-separated in env). */
-    qfTranslationIds: process.env.QF_TRANSLATION_IDS || '20',
+    qfTranslationIds: process.env.QF_TRANSLATION_IDS || '85',
     public: {
       qfBase: process.env.NUXT_PUBLIC_QF_BASE || 'https://api.quran.foundation'
     }
