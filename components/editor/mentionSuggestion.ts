@@ -3,36 +3,93 @@ import tippy from 'tippy.js'
 import MentionList from './MentionList.vue'
 import { $fetch } from 'ofetch'
 
-// Basic debounce utility
-function debounce(func: Function, wait: number) {
-  let timeout: any
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout)
-      func(...args)
-    }
-    clearTimeout(timeout)
-    timeout = setTimeout(later, wait)
+interface Chapter {
+  id: number
+  name_simple: string
+  name_arabic: string
+  verse_count: number
+  transliteration?: string
+}
+
+let chaptersCache: Chapter[] = []
+let cacheTime = 0
+const CACHE_DURATION = 60000
+
+async function loadChapters(): Promise<Chapter[]> {
+  const now = Date.now()
+  if (chaptersCache.length > 0 && now - cacheTime < CACHE_DURATION) {
+    return chaptersCache
+  }
+  
+  try {
+    const data = await $fetch<{ chapters: Chapter[] }>('/api/chapters')
+    chaptersCache = data.chapters || []
+    cacheTime = now
+    return chaptersCache
+  } catch (e) {
+    console.error('Failed to load chapters:', e)
+    return chaptersCache.length > 0 ? chaptersCache : []
   }
 }
 
 export default {
   items: async ({ query }: { query: string }) => {
-    if (!query || query.length < 2) return []
+    const chapters = await loadChapters()
+    const q = query.trim()
 
-    try {
-      const q = query.toLowerCase()
-      // Call our internal QF API proxy
-      const data = await $fetch('/api/quran/search', {
-        query: { q }
-      })
-      
-      // Limit to 5 results to keep the UI clean and fast
-      return Array.isArray(data?.results) ? data.results.slice(0, 5) : []
-    } catch (e) {
-      console.error('Failed to fetch mentions:', e)
+    if (!q) {
+      return chapters.slice(0, 10)
+    }
+
+    if (q.endsWith(':')) {
+      const chapterPart = q.slice(0, -1)
+      const chapterNum = parseInt(chapterPart)
+      if (!isNaN(chapterNum) && chapterNum >= 1 && chapterNum <= 114) {
+        const chapter = chapters.find(c => c.id === chapterNum)
+        if (chapter) {
+          return Array.from({ length: chapter.verse_count }, (_, i) => ({
+            chapter_id: chapterNum,
+            verse_number: i + 1,
+            key: `${chapterNum}:${i + 1}`
+          }))
+        }
+      }
       return []
     }
+
+    if (q.includes(':')) {
+      const [chapterPart, versePart] = q.split(':')
+      const chapterNum = parseInt(chapterPart)
+      if (!isNaN(chapterNum) && chapterNum >= 1 && chapterNum <= 114) {
+        const chapter = chapters.find(c => c.id === chapterNum)
+        if (chapter) {
+          const verses = Array.from({ length: chapter.verse_count }, (_, i) => ({
+            chapter_id: chapterNum,
+            verse_number: i + 1,
+            key: `${chapterNum}:${i + 1}`
+          }))
+          if (versePart) {
+            return verses.filter(v => v.key.split(':')[1].startsWith(versePart.toLowerCase())).slice(0, 10)
+          }
+          return verses.slice(0, 10)
+        }
+      }
+      return []
+    }
+
+    const chapterNum = parseInt(q)
+    if (!isNaN(chapterNum) && chapterNum >= 1 && chapterNum <= 114) {
+      return chapters.filter(c => 
+        c.id === chapterNum || c.name_simple.toLowerCase().includes(q.toLowerCase())
+      ).slice(0, 10)
+    }
+
+    return chapters.filter(c => 
+      c.id.toString().startsWith(q.toLowerCase()) || 
+      c.name_simple.toLowerCase().includes(q.toLowerCase()) ||
+      c.name_arabic.includes(q) ||
+      c.transliteration?.toLowerCase().includes(q.toLowerCase())
+    ).slice(0, 10)
   },
 
   render: () => {
@@ -42,7 +99,7 @@ export default {
     return {
       onStart: (props: any) => {
         component = new VueRenderer(MentionList, {
-          props,
+          props: { items: props.items, command: props.command },
           editor: props.editor,
         })
 
@@ -58,38 +115,34 @@ export default {
           interactive: true,
           trigger: 'manual',
           placement: 'bottom-start',
-          animation: 'fade', // Tippy built-in animation for a premium feel
+          animation: 'fade',
+          maxWidth: 400,
         })
       },
 
       onUpdate(props: any) {
-        component.updateProps(props)
-
-        if (!props.clientRect) {
-          return
+        if (component) {
+          component.updateProps({ items: props.items, command: props.command })
         }
-
-        popup[0].setProps({
-          getReferenceClientRect: props.clientRect,
-        })
+        if (popup && popup[0]) {
+          popup[0].setProps({
+            getReferenceClientRect: props.clientRect,
+          })
+        }
       },
 
       onKeyDown(props: any) {
         if (props.event.key === 'Escape') {
-          popup[0].hide()
+          popup?.[0]?.hide()
           return true
         }
 
-        return component?.ref?.onKeyDown(props.event)
+        return component?.ref?.onKeyDown?.(props.event)
       },
 
       onExit() {
-        if (popup) {
-          popup[0].destroy()
-        }
-        if (component) {
-          component.destroy()
-        }
+        popup?.[0]?.destroy()
+        component?.destroy()
       },
     }
   },

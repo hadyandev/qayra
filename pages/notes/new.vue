@@ -34,26 +34,33 @@
               <div class="relative">
                 <input 
                   v-model="form.source" 
-                  placeholder="Type to add new..."
-                  list="sources-list"
+                  placeholder="e.g., kajian, khutbah, podcast"
+                  list="sources-suggestions"
                   class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:focus:ring-amber-400/30 transition-all duration-300"
                 />
-                <datalist id="sources-list">
+                <datalist id="sources-suggestions">
+                  <option value="Kajian" />
+                  <option value="Khutbah" />
+                  <option value="Podcast" />
+                  <option value="Book" />
+                  <option value="Personal Study" />
+                  <option value="Lecture" />
+                  <option value="Seminar" />
                   <option v-for="s in sources" :key="s.id" :value="s.name" />
                 </datalist>
               </div>
             </div>
 
             <div class="space-y-1.5">
-              <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Speaker</label>
+              <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Speaker / Author</label>
               <div class="relative">
                 <input 
                   v-model="form.speaker" 
-                  placeholder="Type to add new..."
-                  list="speakers-list"
+                  placeholder="e.g., Ustadz Hanan Attaki"
+                  list="speakers-suggestions"
                   class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:focus:ring-amber-400/30 transition-all duration-300"
                 />
-                <datalist id="speakers-list">
+                <datalist id="speakers-suggestions">
                   <option v-for="s in speakers" :key="s.id" :value="s.name" />
                 </datalist>
               </div>
@@ -74,7 +81,7 @@
               <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Tags</label>
               <input 
                 v-model="tagsRaw" 
-                placeholder="tafsir, ramadan"
+                placeholder="e.g., tafsir, ramadan, ibadah"
                 class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:focus:ring-amber-400/30 transition-all duration-300"
               />
             </div>
@@ -86,6 +93,9 @@
           <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-[1.5rem] overflow-hidden ring-1 ring-stone-200/30 dark:ring-stone-800/30">
             <NoteEditor v-model="form.content" />
           </div>
+          <p class="text-xs text-[#52525B] dark:text-stone-500 mt-1">
+            Tip: Type @ to search for verses (e.g., @2:153)
+          </p>
         </div>
 
         <div v-if="err" class="bg-red-50 dark:bg-red-950/30 border border-red-200/60 dark:border-red-800/60 rounded-xl px-4 py-3 text-sm text-red-600 dark:text-red-400">
@@ -136,7 +146,7 @@ onMounted(async () => {
   
   const v = route.query.verse as string | undefined
   if (v) {
-    form.content = `<p>@${v} </p>`
+    form.content = `<p>@${v} => "</p><p></p><p></p>`
   }
 })
 

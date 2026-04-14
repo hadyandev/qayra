@@ -66,11 +66,15 @@ const colorMode = useColorMode()
 const navLinks = [
   { to: '/notes', label: 'Notes' },
   { to: '/browse', label: 'Browse Quran' },
+  { to: '/heatmap', label: 'Heatmap' },
 ]
 
 function isActive(path: string) {
   if (path === '/notes') {
     return route.path.startsWith('/notes')
+  }
+  if (path === '/heatmap') {
+    return route.path.startsWith('/heatmap')
   }
   return route.path.startsWith(path)
 }

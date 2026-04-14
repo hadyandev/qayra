@@ -101,6 +101,35 @@ export interface Database {
           created_at?: string
         }
       }
+      chapters: {
+        Row: {
+          id: number
+          name_simple: string
+          name_complex: string
+          name_arabic: string
+          transliteration: string | null
+          verse_count: number
+          chapter_type: string | null
+        }
+        Insert: {
+          id?: number
+          name_simple: string
+          name_complex: string
+          name_arabic: string
+          transliteration?: string | null
+          verse_count: number
+          chapter_type?: string | null
+        }
+        Update: {
+          id?: number
+          name_simple?: string
+          name_complex?: string
+          name_arabic?: string
+          transliteration?: string | null
+          verse_count?: number
+          chapter_type?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -129,3 +158,4 @@ export type NoteUpdate = Database['public']['Tables']['notes']['Update']
 export type NoteVerse = Database['public']['Tables']['note_verses']['Row']
 export type Source = Database['public']['Tables']['sources']['Row']
 export type Speaker = Database['public']['Tables']['speakers']['Row']
+export type Chapter = Database['public']['Tables']['chapters']['Row']
