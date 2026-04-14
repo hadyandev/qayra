@@ -11,6 +11,7 @@ interface Chapter {
 interface VerseData {
   id: number
   verse_key: string
+  text: string
   text_uthmani: string
   text_imlaei: string
   translations: { text: string; resource_name: string }[]
@@ -19,22 +20,17 @@ interface VerseData {
     name_complex: string
     name_simple: string
     name_arabic: string
-  }
+  } | null
 }
 
-// Simple composable that calls server-side API endpoints
-// The server handles all Quran Foundation SDK authentication
 export const useQuran = () => {
-  // Get list of all Surah/Chapters - uses Content API (no special scope needed)
   const chapters = async (): Promise<Chapter[]> => {
     try {
-      const response: any = await $fetch('/api/quran/chapters')
-
+      const response = await $fetch<{ chapters?: Chapter[]; error?: string }>('/api/quran/chapters')
       if (response.error) {
         console.error('Chapters error:', response.error)
         return []
       }
-
       return response.chapters || []
     } catch (error) {
       console.error('Chapters fetch error:', error)
@@ -42,22 +38,16 @@ export const useQuran = () => {
     }
   }
 
-  // Get verse data - uses Content API (no special scope needed)
   const verse = async (key: string): Promise<VerseData | null> => {
-    if (!key) {
-      return null
-    }
-
+    if (!key) return null
     try {
-      const response: any = await $fetch('/api/quran/verse', {
-        query: { key: key }
+      const response = await $fetch<{ verse?: VerseData; error?: string }>('/api/quran/verse', {
+        query: { key }
       })
-
       if (response.error) {
         console.error('Verse error:', response.error)
         return null
       }
-
       return response.verse || null
     } catch (error) {
       console.error('Verse fetch error:', error)
@@ -65,9 +55,22 @@ export const useQuran = () => {
     }
   }
 
-  // NOTE: Search API requires special OAuth2 scope that needs approval
-  // Keeping this commented out until scope is approved
-  // const search = async (q: string): Promise<any[]> => { ... }
+  const search = async (q: string): Promise<unknown[]> => {
+    if (!q?.trim()) return []
+    try {
+      const response = await $fetch<{ results?: unknown[]; error?: string }>('/api/quran/search', {
+        query: { q: q.trim() }
+      })
+      if (response.error) {
+        console.error('Search error:', response.error)
+        return []
+      }
+      return response.results || []
+    } catch (error) {
+      console.error('Search fetch error:', error)
+      return []
+    }
+  }
 
-  return { chapters, verse }
+  return { chapters, verse, search }
 }

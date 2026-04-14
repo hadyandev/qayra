@@ -1,35 +1,23 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const config = useRuntimeConfig()
+  const supabase = await serverSupabaseClient(event)
 
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.supabaseKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  )
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
 
-  // Get auth header for user identification
-  const authHeader = getHeader(event, 'authorization')
-  
-  if (authHeader) {
-    const token = authHeader.replace('Bearer ', '')
-    supabase.auth.setSession({ access_token: token, refresh_token: '' })
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
-
-  const { data: { user } } = await supabase.auth.getUser()
 
   // Insert reflection
   const { data: reflection, error: dbError } = await supabase
     .from('reflections')
     .insert({
-      user_id: user?.id || null,
+      user_id: user.id,
       verse_key: body.verse_key,
       content: body.content,
       is_published: false

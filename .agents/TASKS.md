@@ -1,75 +1,24 @@
-# 🌙 QAYRA — Development Tasks
+# Qayra — development tasks
 
-> Quran-centered reflection system  
-> Hackathon: https://launch.provisioncapital.com/quran-hackathon
+> Aligned with [`qayra_full_deep_spec.md`](qayra_full_deep_spec.md) (note-first, QF APIs, Supabase FTS).
 
----
+## Done (implementation pass)
 
-## 📋 Current Status
+- [x] Phase 1: `@nuxtjs/supabase`, runtime config, `.env.example` (QF + Supabase).
+- [x] Phase 2: SQL migration [`supabase/migrations/20260414000000_notes.sql`](../supabase/migrations/20260414000000_notes.sql) — run in Supabase dashboard.
+- [x] Phase 3: `/api/notes` CRUD + verse extraction into `note_verses`; pages `/notes`, `/notes/new`, `/notes/[id]`; layout + auth middleware; magic link login.
+- [x] Phase 4: TipTap editor (`components/NoteEditor.vue`) — cite verses as `@surah:ayah` in text/HTML.
+- [x] Phase 5: Quran Foundation via Nitro [`server/utils/qfHttp.ts`](../server/utils/qfHttp.ts) (OAuth `content` / `search` scopes); `/api/quran/chapters`, `verse`, `search`.
+- [x] Phase 6: `GET /api/search/notes` → RPC `search_user_notes` (Postgres FTS).
 
-**Foundation:** ✅ Complete (Nuxt 3, Supabase, QF API structure)
-**MVP Goal:** 🎯 Functional search, verse display, reflections, OAuth
+## Optional / next
 
----
+- [ ] Phase 7: `POST /api/publish` + QF User-related APIs + OAuth hardening for hackathon demo.
+- [ ] Typed Supabase: add `types/database.types.ts` (or generate) to silence module warning.
+- [ ] TipTap `@` dropdown wired to `/api/quran/search` (mention UI polish).
 
-## 🎯 Task Breakdown
+## Verify locally
 
-### Iteration 1: Core Search & Verse Display
-- [ ] **Task 1.1:** Implement Quran Foundation API search in `useQuran.ts`
-- [ ] **Task 1.2:** Update index.vue with real search results
-- [ ] **Task 1.3:** Fetch verse detail with translation in `[id].vue`
-- [ ] **Task 1.4:** Add loading states and error handling
-
-### Iteration 2: Reflection System
-- [ ] **Task 2.1:** Fix Supabase schema (add user_id, timestamps)
-- [ ] **Task 2.2:** Implement save reflection API
-- [ ] **Task 2.3:** Display reflection list per verse
-- [ ] **Task 2.4:** Add delete/edit reflection
-
-### Iteration 3: OAuth & Publishing
-- [ ] **Task 3.1:** Setup OAuth login flow
-- [ ] **Task 3.2:** Store token in secure cookie
-- [ ] **Task 3.3:** Implement publish to QF posts
-- [ ] **Task 3.4:** Add auth state to UI
-
-### Iteration 4: UI Polish
-- [ ] **Task 4.1:** Add proper Nuxt UI components
-- [ ] **Task 4.2:** Responsive design
-- [ ] **Task 4.3:** Dark mode support
-- [ ] **Task 4.4:** Arabic font rendering
-
----
-
-## 📁 Files to Modify
-
-| File | Purpose |
-|------|---------|
-| `composables/useQuran.ts` | QF API integration |
-| `pages/index.vue` | Search interface |
-| `pages/verse/[id].vue` | Verse + reflection UI |
-| `server/api/reflection.post.ts` | Save reflection |
-| `server/api/auth/*.ts` | OAuth flow |
-| `supabase/schema.sql` | Database schema |
-| `nuxt.config.ts` | Config updates |
-
----
-
-## 🚀 Commit Pattern
-
-```
-[QAYRA-ITER-{N}] {task description}
-
-- What changed
-- Why changed
-- Status: ✅/🔄
-```
-
----
-
-## 📝 Notes
-
-- Quran content fetched live from QF API (no storage)
-- Reflections stored in Supabase
-- OAuth for optional publishing to QF
-
-**Next Action:** Start Iteration 1 — Task 1.1 (API integration)
+1. Apply SQL migration in Supabase.
+2. `cp .env.example .env` and fill keys.
+3. `npm run dev` → sign in → create note → browse Quran.

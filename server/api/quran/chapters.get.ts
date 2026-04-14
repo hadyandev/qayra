@@ -1,32 +1,41 @@
-import type { H3Event } from 'h3'
+import { qfFetchJson } from '../../utils/qfHttp'
 
-export default defineEventHandler(async (event: H3Event) => {
+function mapChapter(raw: Record<string, unknown>) {
+  const translated = raw.translatedName as Record<string, string> | undefined
+  return {
+    id: Number(raw.id),
+    name_simple: (raw.nameSimple ?? raw.name_simple ?? '') as string,
+    name_complex: (raw.nameComplex ?? raw.name_complex ?? '') as string,
+    name_arabic: (raw.nameArabic ?? raw.name_arabic ?? '') as string,
+    translated_name: translated?.name ?? (raw.translated_name as string) ?? '',
+    verses_count: Number(raw.versesCount ?? raw.verses_count ?? 0),
+    revelation_place: String(raw.revelationPlace ?? raw.revelation_place ?? '')
+  }
+}
+
+export default defineEventHandler(async () => {
   try {
-    // Call Quran.com API (public, no auth needed)
-    const response = await $fetch('https://api.quran.com/api/v4/chapters', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
+    const data = await qfFetchJson<Record<string, unknown>>(
+      '/content/api/v4/chapters',
+      undefined,
+      'content'
+    )
+    const list =
+      (data.chapters as Record<string, unknown>[]) ||
+      (data.result as Record<string, unknown>[]) ||
+      (Array.isArray(data) ? (data as Record<string, unknown>[]) : null)
 
-    // Transform response to our format
-    const chapters = (response.chapters || []).map((chapter: any) => ({
-      id: chapter.id,
-      name_simple: chapter.name_simple,
-      name_complex: chapter.name_complex,
-      name_arabic: chapter.name_arabic,
-      translated_name: chapter.translated_name?.name || '',
-      verses_count: chapter.verses_count,
-      revelation_place: chapter.revelation_place
-    }))
+    if (!list || !Array.isArray(list)) {
+      console.error('QF chapters unexpected shape', Object.keys(data || {}))
+      return { chapters: [], error: 'Unexpected chapters response' }
+    }
 
-    return { chapters }
+    return { chapters: list.map(mapChapter) }
   } catch (error: any) {
     console.error('Chapters API error:', error)
     return {
-      error: 'Failed to load surah list',
-      details: error.message || 'Unknown error'
+      chapters: [],
+      error: error?.message || 'Failed to load surah list'
     }
   }
 })

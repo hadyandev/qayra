@@ -2,12 +2,21 @@
   "name": "qayra-v3",
   "private": true,
   "scripts": {
-    "dev": "nuxt dev"
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview"
   },
   "dependencies": {
     "@nuxt/ui": "^2.0.0",
+    "@nuxtjs/color-mode": "^4.0.0",
+    "@nuxtjs/supabase": "^2.0.5",
     "@quranjs/api": "^1.0.0",
     "@supabase/supabase-js": "^2.101.1",
+    "@tiptap/extension-mention": "^3.22.3",
+    "@tiptap/extension-placeholder": "^3.22.3",
+    "@tiptap/pm": "^3.22.3",
+    "@tiptap/starter-kit": "^3.22.3",
+    "@tiptap/vue-3": "^3.22.3",
     "nuxt": "^3.10.0"
   }
 }

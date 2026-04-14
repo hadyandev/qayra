@@ -1,13 +1,30 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxtjs/supabase', '@nuxtjs/color-mode'],
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    classSuffix: ''
+  },
+  supabase: {
+    redirect: false,
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      exclude: ['/login', '/confirm', '/', '/browse', '/verse/*']
+    }
+  },
   runtimeConfig: {
-    supabaseKey: process.env.SUPABASE_KEY,
-    // Quran Foundation OAuth2 credentials (server-side only)
-    qfClientId: process.env.QF_CLIENT_ID,
-    qfClientSecret: process.env.QF_CLIENT_SECRET,
+    qfClientId: process.env.QF_CLIENT_ID || process.env.QURAN_CLIENT_ID,
+    qfClientSecret: process.env.QF_CLIENT_SECRET || process.env.QURAN_CLIENT_SECRET,
+    qfApiBase:
+      process.env.QF_API_BASE || 'https://apis-prelive.quran.foundation',
+    qfOAuthTokenUrl:
+      process.env.QF_OAUTH_TOKEN_URL ||
+      'https://prelive-oauth2.quran.foundation/oauth2/token',
+    /** Default translation resource id(s) for verse fetch (comma-separated in env). */
+    qfTranslationIds: process.env.QF_TRANSLATION_IDS || '20',
     public: {
-      supabaseUrl: process.env.SUPABASE_URL,
-      qfBase: 'https://api.quran.foundation'
+      qfBase: process.env.NUXT_PUBLIC_QF_BASE || 'https://api.quran.foundation'
     }
   }
 })
