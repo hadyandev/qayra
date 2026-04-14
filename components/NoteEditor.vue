@@ -13,6 +13,8 @@
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Mention from '@tiptap/extension-mention'
+import suggestion from './editor/mentionSuggestion'
 
 const props = defineProps<{
   modelValue: string
@@ -27,7 +29,13 @@ const editor = useEditor({
     StarterKit,
     Placeholder.configure({
       placeholder:
-        'Write your note… Cite verses with @surah:ayah (e.g. @2:153). Rich text is saved as HTML.'
+        'Write your note… Cite verses with @surah:ayah (e.g. @2:153).'
+    }),
+    Mention.configure({
+      HTMLAttributes: {
+        class: 'mention text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1 py-0.5 rounded-md font-mono text-sm border-b border-amber-200 dark:border-amber-700/50',
+      },
+      suggestion,
     })
   ],
   content: props.modelValue || '',

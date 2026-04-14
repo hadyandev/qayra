@@ -17,6 +17,7 @@
     "@tiptap/pm": "^3.22.3",
     "@tiptap/starter-kit": "^3.22.3",
     "@tiptap/vue-3": "^3.22.3",
-    "nuxt": "^3.10.0"
+    "nuxt": "^3.10.0",
+    "tippy.js": "^6.3.7"
   }
 }
