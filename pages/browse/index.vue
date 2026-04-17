@@ -130,11 +130,11 @@ const filteredChapters = computed(() => {
 })
 
 const meccanChapters = computed(() => 
-  filteredChapters.value.filter(c => c.revelation_place === 'meccan')
+  filteredChapters.value.filter(c => c.revelation_place?.toLowerCase().includes('makkah'))
 )
 
 const medinanChapters = computed(() => 
-  filteredChapters.value.filter(c => c.revelation_place === 'medinan')
+  filteredChapters.value.filter(c => c.revelation_place?.toLowerCase().includes('madinah'))
 )
 
 async function loadUserReflections() {

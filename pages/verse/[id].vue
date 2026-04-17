@@ -425,8 +425,8 @@ async function loadTafsir() {
         resourceName: data.tafsir.resourceName || 'Tafsir'
       }
     }
-  } catch (e) {
-    console.error('Failed to load tafsir:', e)
+  } catch {
+    // Silently skip - tafsir not available
   } finally {
     loadingTafsir.value = false
   }
@@ -442,8 +442,8 @@ async function loadAudio() {
         reciter: data.audio.reciter
       }
     }
-  } catch (e) {
-    console.error('Failed to load audio:', e)
+  } catch {
+    // Silently skip - audio not available
   } finally {
     loadingAudio.value = false
   }

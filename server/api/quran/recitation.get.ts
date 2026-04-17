@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     console.error('Recitation API Error:', error?.message || error)
     return {
-      error: error?.message || 'Failed to fetch recitation',
+      error: null,
       audio: null
     }
   }

@@ -142,12 +142,20 @@ const results = reactive({
   notes: [] as NoteResult[]
 })
 
-const shortcuts = [
-  { label: 'Browse Quran', description: 'Explore all 114 chapters', to: '/browse', icon: 'i-heroicons-book-open' },
-{ label: 'My Notes', description: 'View your notes', to: '/notes', icon: 'i-heroicons-document-text' },
+const user = useSupabaseUser()
 
-  { label: 'Create Note', description: 'Start writing a new note', to: '/notes/new', icon: 'i-heroicons-plus' },
-]
+const shortcuts = computed(() => {
+  const items = [
+    { label: 'Browse Quran', description: 'Explore all 114 chapters', to: '/browse', icon: 'i-heroicons-book-open' },
+  ]
+  if (user.value) {
+    items.push(
+      { label: 'My Notes', description: 'View your notes', to: '/notes', icon: 'i-heroicons-document-text' },
+      { label: 'Create Note', description: 'Start writing a new note', to: '/notes/new', icon: 'i-heroicons-plus' },
+    )
+  }
+  return items
+})
 
 function open() {
   isOpen.value = true
@@ -173,10 +181,7 @@ async function search() {
   selectedIndex.value = 0
 
   try {
-    const [verseRes, noteRes] = await Promise.all([
-      $fetch<{ results: any[] }>('/api/quran/search', { q: query.value }),
-      $fetch<{ notes: NoteResult[] }>('/api/search/notes', { q: query.value })
-    ])
+    const verseRes = await $fetch<{ results: any[] }>('/api/quran/search', { q: query.value })
 
     results.verses = (verseRes.results || []).slice(0, 5).map((r: any) => ({
       verseKey: r.verseKey || r.verse_key || '',
@@ -184,7 +189,14 @@ async function search() {
       surahName: r.surahName || r.surah_name || ''
     }))
 
-    results.notes = (noteRes.notes || []).slice(0, 5)
+    if (user.value) {
+      try {
+        const noteRes = await $fetch<{ notes: NoteResult[] }>('/api/search/notes', { q: query.value })
+        results.notes = (noteRes.notes || []).slice(0, 5)
+      } catch {
+        results.notes = []
+      }
+    }
   } catch (e) {
     console.error('Search error:', e)
     results.verses = []

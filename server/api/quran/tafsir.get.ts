@@ -13,13 +13,7 @@ export default defineEventHandler(async (event) => {
     const path = `/content/api/v4/verses/by_key/${encodeURIComponent(key)}/tafsirs/${tafsirId}`
     const data = await qfFetchJson<{
       verse?: Record<string, unknown>
-    }>(
-      path,
-      {
-        language: 'en'
-      },
-      'content'
-    )
+    }>(path, undefined, 'content')
 
     const verse = data.verse
     if (!verse) {
@@ -37,7 +31,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     console.error('Tafsir API Error:', error?.message || error)
     return {
-      error: error?.message || 'Failed to fetch tafsir',
+      error: null,
       tafsir: null
     }
   }
