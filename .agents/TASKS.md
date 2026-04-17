@@ -20,6 +20,116 @@
 - [x] Typed Supabase: `types/database.types.ts`
 - [x] QF API fixes: Fixed chapters/verse response mapping, default translation ID changed to 85
 
+## QF Integration (Hackathon Goal: 1 Content API + 1 User API)
+
+### Environment
+- `QF_ENV=prelive` — Content API + User API available
+- `QF_ENV=live` — Content API only (User API pending)
+
+### Phase 8: Use QF JS SDK (Option C)
+> Replace manual qfHttp.ts calls with `@quranjs/api` SDK for cleaner code
+
+- [ ] Install `@quranjs/api` package
+- [ ] Update `composables/useQuran.ts` to use SDK methods
+- [ ] Update `server/api/quran/*.ts` to use SDK where applicable
+- [ ] Keep `qfHttp.ts` as fallback / for User API calls
+
+### Phase 9: Enhance Search with QF Search API
+> Upgrade command palette search to use QF Search API
+
+- [ ] Update `/api/quran/search.get.ts` to use QF Search API
+- [ ] Implement `SearchMode.Quick` for command palette (chapters, juz, pages + verses)
+- [ ] Update `components/CommandPalette.vue` to show navigation results
+- [ ] Support multi-language search (English, Arabic, Urdu)
+
+### Phase 10: Browse Quran by Topics/Categories ⏳ IN PROGRESS
+> Browse Quran by Islamic topics (patience, mercy, prayer, etc.)
+
+**Topics:** prayer, patience, charity, faith, paradise, hell, prophet, allah, mercy, justice, knowledge, family, death, creation, guidance
+
+**Implementation:**
+- [ ] Create topic data structure (verse keys grouped by topic)
+- [ ] Add topic filter/tabs on browse page
+- [ ] Create topic detail page (`/browse/topic/:slug`)
+- [ ] Add topic badges on verse cards
+- [ ] Add topic-based search capability
+
+**Current:** Creating topic data and adding topic filter to browse page
+
+### Phase 11: Publish to QF (Option A) — Per Verse Reflection
+> Allow users to publish individual verse reflections to their Quran.com profile
+
+**Data Model:**
+```
+Qayra: note_verses table (note_id, verse_key)
+  ↓ Each row = one verse reflection
+QF: POST /v1/notes { body: "...", ranges: ["1:1"] }
+```
+
+- [ ] Add QF User API base URL to config (prelive: `https://api-prelive.quran.foundation`)
+- [ ] Create `POST /api/qf/notes` endpoint to publish single verse reflection
+- [ ] Add `qf_published_at` column to `note_verses` table (track publish status)
+- [ ] Add "Publish to Quran.com" button on verse detail page (per reflection)
+- [ ] Show "Published ✓" badge on successfully published reflections
+
+**Implementation Notes:**
+- Extract reflection text from note content for specific verse_key
+- Map Qayra verse_key (e.g., "1:1") to QF range format (e.g., "1:1-1:1")
+- Handle auth: Use QF access token (obtained same way as Content API)
+
+---
+
+## Extended Features (Post-Hackathon)
+
+### Phase 12: Add Hadith to Qayra
+> Expand from Quran-only to complete Islamic knowledge workspace
+
+**Vision:** Browse Quran + Hadith + make reflections on both
+
+**Data Source:** `@quranmcp/server` - provides Hadith collections:
+- Sahih Bukhari (7,563)
+- Sahih Muslim (7,563)
+- Sunan Abu Dawud (5,274)
+- Jami' at-Tirmidhi (3,956)
+- Sunan an-Nasa'i (5,758)
+- Sunan Ibn Majah (4,341)
+
+**Features:**
+- [ ] Browse Hadith collections (6 major collections)
+- [ ] Browse by book/chapter
+- [ ] Search Hadith by keywords
+- [ ] Search Hadith by topic
+- [ ] Add note/reflection on Hadith
+- [ ] Show related ahadith on verse detail page
+
+### Phase 13: Browse by Category/Topic
+> Browse Quran and Hadith by Islamic topics
+
+**Topics:** prayer, patience, charity, faith, paradise, hell, prophet, allah, mercy, justice, knowledge, family, death, creation, guidance
+
+**Features:**
+- [ ] Category/Topic pages for Quran
+- [ ] Category/Topic pages for Hadith
+- [ ] Topic-based discovery (AI understands topics)
+
+### Phase 14: Hybrid MCP Architecture
+> Use remote MCP but fall back to local when rate limited
+
+**Pattern:**
+```
+1. Try remote MCP (npx @quranmcp/server)
+2. If rate limited → fall back to local cache
+3. Local cache populated from initial sync
+```
+
+**Implementation:**
+- [ ] Add MCP fetcher with fallback logic
+- [ ] Implement local cache for Hadith data
+- [ ] Handle offline gracefully
+- [ ] Sync strategy for cache population
+
+---
+
 ## Remaining / Optional
 
 - [ ] Custom 404 page — premium "page not found" experience

@@ -33,6 +33,9 @@
             {{ surah.name_arabic }}
           </div>
         </div>
+        <p v-if="meaning" class="text-xs text-stone-500 dark:text-stone-500 mt-1.5 italic">
+          {{ meaning }}
+        </p>
         <div class="flex items-center gap-2 mt-2 text-xs text-[#52525B] dark:text-stone-500">
           <span class="px-2 py-0.5 bg-stone-50 dark:bg-stone-800 rounded-full">
             {{ surah.verses_count }} verses
@@ -47,6 +50,8 @@
 </template>
 
 <script setup lang="ts">
+import { surahMeanings } from '~/data/surahMeanings'
+
 const props = defineProps<{
   surah: {
     id: number
@@ -62,4 +67,5 @@ const props = defineProps<{
 const featuredSurahs = new Set([1, 2, 36, 55, 56, 67])
 
 const isFeatured = computed(() => featuredSurahs.has(props.surah.id))
+const meaning = computed(() => surahMeanings[props.surah.id] || '')
 </script>

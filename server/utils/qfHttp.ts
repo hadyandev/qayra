@@ -1,8 +1,13 @@
 import { useRuntimeConfig } from '#imports'
 
-type QfScope = 'content' | 'search'
+type QfScope = 'content' | 'search' | 'user'
 
 const tokenCache: Partial<Record<QfScope, { token: string; expiresAt: number }>> = {}
+
+const userApiBaseMap: Record<string, string> = {
+  prelive: 'https://api-prelive.quran.foundation',
+  live: 'https://api.quran.foundation'
+}
 
 interface TokenResponse {
   access_token?: string
@@ -17,37 +22,51 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
   const secret = config.qfClientSecret as string | undefined
   
   if (!id || !secret) {
-    console.error('QF OAuth Error: Missing QF_CLIENT_ID or QF_CLIENT_SECRET')
+    console.error('[QF OAuth] Missing QF_CLIENT_ID or QF_CLIENT_SECRET')
     return null
   }
 
   const now = Date.now()
   const cached = tokenCache[scope]
   if (cached && cached.expiresAt > now + 5 * 60 * 1000) {
+    console.log('[QF OAuth] Using cached token for scope:', scope)
     return cached.token
   }
 
-  const tokenUrl =
-    (config.qfOAuthTokenUrl as string | undefined) ||
-    'https://prelive-oauth2.quran.foundation/oauth2/token'
+  const tokenUrl = config.qfOAuthTokenUrl as string
+  console.log('[QF OAuth] Requesting token from:', tokenUrl)
+  console.log('[QF OAuth] Scope:', scope)
+  console.log('[QF OAuth] Client ID:', id.substring(0, 8) + '...')
 
   try {
+    // Map scope to valid OAuth scopes
+    let oauthScope = 'content'
+    if (scope === 'user') {
+      oauthScope = 'note' // Use 'note' scope for user API access
+    } else if (scope === 'search') {
+      oauthScope = 'search'
+    }
+
+    console.log('[QF OAuth] OAuth scope:', oauthScope)
+
     const response = await $fetch<TokenResponse>(tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`
       },
-      body: `grant_type=client_credentials&scope=${scope}`
+      body: `grant_type=client_credentials&scope=${oauthScope}`
     })
 
+    console.log('[QF OAuth] Response:', JSON.stringify(response))
+
     if (response.error) {
-      console.error('QF OAuth Error:', response.error, response.error_description)
+      console.error('[QF OAuth] Error:', response.error, response.error_description)
       return null
     }
 
     if (!response.access_token) {
-      console.error('QF OAuth Error: No access token in response')
+      console.error('[QF OAuth] No access token in response')
       return null
     }
 
@@ -57,9 +76,9 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
     }
     return response.access_token
   } catch (e: any) {
-    console.error('QF OAuth Error:', e?.message || e)
+    console.error('[QF OAuth] Exception:', e?.message || e)
     if (e?.data) {
-      console.error('QF OAuth Error Details:', JSON.stringify(e.data))
+      console.error('[QF OAuth] Error Details:', JSON.stringify(e.data))
     }
     return null
   }
@@ -72,14 +91,25 @@ export async function qfFetchJson<T>(
 ): Promise<T> {
   const config = useRuntimeConfig()
   const id = config.qfClientId as string | undefined
-  const base = (config.qfApiBase as string | undefined) || 'https://apis-prelive.quran.foundation'
+  const contentBase = config.qfApiBase as string || 'https://apis-prelive.quran.foundation'
+  const userBase = config.qfUserApiBase as string || 'https://api-prelive.quran.foundation'
   const token = await getQfAccessToken(scope)
   
   if (!token || !id) {
     throw new Error('Quran Foundation authentication failed')
   }
 
-  const url = new URL(path.startsWith('http') ? path : `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`)
+  let base: string
+  if (scope === 'user') {
+    base = userBase
+  } else {
+    base = contentBase
+  }
+
+  const cleanBase = base.replace(/\/$/, '')
+  const cleanPath = path.replace(/^\//, '')
+  const url = new URL(path.startsWith('http') ? path : cleanBase + '/' + cleanPath)
+  
   if (query) {
     for (const [k, v] of Object.entries(query)) {
       if (v !== undefined && v !== '') url.searchParams.set(k, String(v))

@@ -1,17 +1,19 @@
-const qfEnv = process.env.QF_ENV || 'live'
+const qfEnv = process.env.QF_ENV || 'prelive'
 
 const qfConfigMap = {
   prelive: {
     apiBase: 'https://apis-prelive.quran.foundation',
+    userApiBase: 'https://api-prelive.quran.foundation',
     oauthTokenUrl: 'https://prelive-oauth2.quran.foundation/oauth2/token'
   },
   live: {
     apiBase: 'https://apis.quran.foundation',
+    userApiBase: 'https://api.quran.foundation', // Not available on prod yet
     oauthTokenUrl: 'https://oauth2.quran.foundation/oauth2/token'
   }
 }
 
-const qfConfig = qfConfigMap[qfEnv as keyof typeof qfConfigMap] || qfConfigMap.live
+const qfConfig = qfConfigMap[qfEnv as keyof typeof qfConfigMap] || qfConfigMap.prelive
 
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxtjs/supabase', '@nuxtjs/color-mode'],
@@ -42,6 +44,7 @@ export default defineNuxtConfig({
     qfClientId: process.env.QF_CLIENT_ID || process.env.QURAN_CLIENT_ID,
     qfClientSecret: process.env.QF_CLIENT_SECRET || process.env.QURAN_CLIENT_SECRET,
     qfApiBase: process.env.QF_API_BASE || qfConfig.apiBase,
+    qfUserApiBase: process.env.QF_USER_API_BASE || qfConfig.userApiBase,
     qfOAuthTokenUrl: process.env.QF_OAUTH_TOKEN_URL || qfConfig.oauthTokenUrl,
     qfTranslationIds: process.env.QF_TRANSLATION_IDS || '85',
     public: {
