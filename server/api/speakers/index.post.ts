@@ -11,20 +11,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
 
-  const body = await readBody<{ name: string }>(event)
+  const body = await readBody<{ name: string; makeGlobal?: boolean }>(event)
   const name = body.name?.trim()
 
   if (!name) {
     throw createError({ statusCode: 400, statusMessage: 'Speaker name is required' })
   }
 
+  const isGlobal = body.makeGlobal === true
+
   const { data: speaker, error } = await client
     .from('speakers')
     .upsert(
-      { user_id: user.id, name },
+      { user_id: user.id, name, is_global: isGlobal },
       { onConflict: 'user_id,name' }
     )
-    .select('id, name')
+    .select('id, name, is_global')
     .single()
 
   if (error) {

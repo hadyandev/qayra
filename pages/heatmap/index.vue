@@ -2,148 +2,158 @@
   <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
     <div class="max-w-6xl mx-auto px-6 py-12">
       <header class="mb-12">
-        <h1 class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight mb-2">
-          Reflection Heatmap
-        </h1>
-        <p class="text-[#52525B] dark:text-stone-400">
-          Visual overview of your Quran reflections across all chapters
-        </p>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <UIcon name="i-heroicons-chart-bar-square" class="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h1 class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight">
+              Statistics
+            </h1>
+            <p class="text-[#52525B] dark:text-stone-400">
+              {{ user ? 'Your note journey across the Quran' : 'Quran engagement statistics' }}
+            </p>
+            
+            <div v-if="!user" class="mt-4 text-xs text-amber-600 dark:text-amber-500">
+              Sign in to see your personal statistics
+            </div>
+          </div>
+        </div>
       </header>
 
       <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
         <div class="flex flex-col items-center gap-4">
           <div class="w-12 h-12 rounded-full border-2 border-stone-200 dark:border-stone-700 border-t-amber-500 animate-spin"></div>
-          <p class="text-[#52525B] dark:text-stone-400">Loading heatmap...</p>
+          <p class="text-[#52525B] dark:text-stone-400">Loading statistics...</p>
         </div>
       </div>
 
       <template v-else>
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
-            <div class="flex items-center gap-3 mb-2">
-              <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
+              <span class="text-xs text-stone-400 uppercase tracking-wide">Notes</span>
             </div>
-            <p class="text-3xl font-semibold text-[#18181B] dark:text-stone-100">114</p>
-            <p class="text-sm text-stone-400">Total Chapters</p>
+            <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ activityData.totalContributions }}</p>
           </div>
           
-          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
-            <div class="flex items-center gap-3 mb-2">
-              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
+              <span class="text-xs text-stone-400 uppercase tracking-wide">Cited Verses</span>
             </div>
-            <p class="text-3xl font-semibold text-[#18181B] dark:text-stone-100">{{ totalVerses.toLocaleString() }}</p>
-            <p class="text-sm text-stone-400">Total Verses</p>
+            <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ totalReflected }}</p>
           </div>
           
-          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
-            <div class="flex items-center gap-3 mb-2">
-              <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <UIcon name="i-heroicons-calendar" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
+              <span class="text-xs text-stone-400 uppercase tracking-wide">Active Days</span>
             </div>
-            <p class="text-3xl font-semibold text-[#18181B] dark:text-stone-100">{{ totalReflected }}</p>
-            <p class="text-sm text-stone-400">Reflected Verses</p>
+            <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ activityData.totalDays }}</p>
           </div>
           
-          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
-            <div class="flex items-center gap-3 mb-2">
-              <div class="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+          <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
                 <UIcon name="i-heroicons-chart-pie" class="w-5 h-5 text-stone-600 dark:text-stone-400" />
               </div>
+              <span class="text-xs text-stone-400 uppercase tracking-wide">Completion</span>
             </div>
-            <p class="text-3xl font-semibold text-[#18181B] dark:text-stone-100">{{ completionPercentage }}%</p>
-            <p class="text-sm text-stone-400">Completion</p>
+            <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ completionPercentage }}%</p>
           </div>
         </div>
 
-        <!-- GitHub-style Contribution Calendar -->
         <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h2 class="text-lg font-medium text-[#18181B] dark:text-stone-100">Contribution Activity</h2>
+              <h2 class="text-lg font-semibold text-[#18181B] dark:text-stone-100">Activity Calendar</h2>
               <p class="text-sm text-stone-400 mt-1">
-                {{ activityData.totalContributions }} reflections in the last year
+                Your note creation over the last year
               </p>
             </div>
-            <div class="flex items-center gap-2 text-xs text-stone-400">
+            <div class="flex items-center gap-1.5 text-xs text-stone-400">
               <span>Less</span>
-              <div class="flex gap-1">
+              <div class="flex gap-0.5">
                 <div class="w-3 h-3 rounded-sm bg-stone-100 dark:bg-stone-800"></div>
                 <div class="w-3 h-3 rounded-sm bg-amber-200 dark:bg-amber-900/50"></div>
                 <div class="w-3 h-3 rounded-sm bg-amber-300 dark:bg-amber-800/70"></div>
                 <div class="w-3 h-3 rounded-sm bg-amber-400 dark:bg-amber-700/80"></div>
-                <div class="w-3 h-3 rounded-sm bg-amber-500 dark:bg-amber-600"></div>
+                <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
               </div>
               <span>More</span>
             </div>
           </div>
           
-          <div class="overflow-x-auto pb-2">
-            <div class="flex gap-1 min-w-max">
-              <div class="flex flex-col gap-1">
-                <div class="h-4"></div>
-                <div class="flex flex-col gap-1 text-[10px] text-stone-400 leading-3">
-                  <span class="h-3">Mon</span>
-                  <span class="h-3"></span>
-                  <span class="h-3">Wed</span>
-                  <span class="h-3"></span>
-                  <span class="h-3">Fri</span>
-                  <span class="h-3"></span>
-                  <span class="h-3">Sun</span>
+          <div class="overflow-x-auto">
+            <div class="flex gap-1 min-w-[800px]">
+              <div class="flex flex-col gap-0.5 pt-6">
+                <div v-for="(day, idx) in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="h-3 text-[9px] text-stone-400 leading-3">
+                  <span v-if="idx % 2 === 1">{{ day }}</span>
                 </div>
               </div>
               
-              <div class="flex gap-1">
-                <div v-if="activityData.monthLabels && activityData.monthLabels.length > 0" class="flex flex-col">
-                  <div class="flex gap-1 mb-1">
-                    <span 
-                      v-for="(label, idx) in activityData.monthLabels" 
-                      :key="idx"
-                      class="text-[10px] text-stone-400"
-                      :style="{ marginLeft: idx === 0 ? '0' : `${(label.weekIndex - (activityData.monthLabels[idx-1]?.weekIndex || 0) - 1) * 12}px` }"
-                    >
-                      {{ label.month }}
-                    </span>
-                  </div>
-                  <div class="flex gap-1">
-                    <div 
-                      v-for="(week, weekIdx) in activityData.weeks" 
-                      :key="weekIdx"
-                      class="flex flex-col gap-1"
-                    >
-                      <div 
-                        v-for="(day, dayIdx) in week" 
-                        :key="dayIdx"
-                        class="w-3 h-3 rounded-sm cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-amber-400/50"
-                        :class="getContributionColor(day.level)"
-                        :title="`${day.date}: ${day.count} reflection${day.count !== 1 ? 's' : ''}`"
-                        @click="showDayActivity(day)"
-                      ></div>
-                    </div>
-                  </div>
+              <div class="flex gap-0.5">
+                <div v-if="activityData.monthLabels?.length" class="flex gap-0.5 mb-1">
+                  <span 
+                    v-for="(label, idx) in activityData.monthLabels" 
+                    :key="idx"
+                    class="text-[9px] text-stone-400 whitespace-nowrap"
+                    :style="{ marginLeft: idx === 0 ? '0' : '4px' }"
+                  >
+                    {{ label.month }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex gap-0.5">
+              <div class="flex flex-col gap-0.5 pr-1">
+                <div v-for="(day, idx) in ['S', 'M', 'T', 'W', 'T', 'F', 'S']" :key="idx" class="h-3 text-[9px] text-stone-400 leading-3 flex items-center">
+                  <span v-if="idx % 2 === 1">{{ day }}</span>
+                </div>
+              </div>
+              
+              <div class="flex gap-0.5">
+                <div 
+                  v-for="(week, weekIdx) in activityData.weeks" 
+                  :key="weekIdx"
+                  class="flex flex-col gap-0.5"
+                >
+                  <div 
+                    v-for="(day, dayIdx) in week" 
+                    :key="dayIdx"
+                    class="w-3 h-3 rounded-sm cursor-pointer transition-all duration-150 hover:ring-2 hover:ring-amber-400/50 hover:scale-125"
+                    :class="getContributionColor(day.level)"
+                    :title="`${formatDate(day.date)}: ${day.count} note${day.count !== 1 ? 's' : ''}`"
+                    @click="showDayActivity(day)"
+                  ></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Chapter List with mini grids -->
-        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl overflow-hidden">
+        <h2 class="text-xl font-semibold text-[#18181B] dark:text-stone-100 mb-4">Chapter Overview</h2>
+        
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl overflow-hidden mb-8">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead>
                 <tr class="border-b border-stone-200/60 dark:border-stone-800">
-                  <th class="text-left px-6 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-16">#</th>
-                  <th class="text-left px-6 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider">Chapter</th>
-                  <th class="text-center px-6 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-24">Type</th>
-                  <th class="text-center px-6 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-24">Verses</th>
-                  <th class="text-center px-6 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-32">Reflected</th>
-                  <th class="text-left px-6 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider">Activity</th>
+                  <th class="text-left px-5 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-14">#</th>
+                  <th class="text-left px-5 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider">Chapter</th>
+                  <th class="text-center px-5 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-20">Type</th>
+                  <th class="text-center px-5 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-20">Verses</th>
+                  <th class="text-center px-5 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider w-24">Notes</th>
+                  <th class="text-left px-5 py-4 text-xs font-medium text-stone-400 uppercase tracking-wider">Progress</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-stone-100 dark:divide-stone-800">
@@ -153,70 +163,49 @@
                   class="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer group"
                   @click="navigateToChapter(chapter.id)"
                 >
-                  <td class="px-6 py-4">
-                    <span class="font-mono text-sm text-amber-600 dark:text-amber-500">{{ chapter.id }}</span>
+                  <td class="px-5 py-4">
+                    <span class="font-mono text-sm font-medium text-amber-600 dark:text-amber-500">{{ chapter.id }}</span>
                   </td>
-                  <td class="px-6 py-4">
+                  <td class="px-5 py-4">
                     <div class="flex items-center gap-3">
-                      <span class="text-arabic text-xl text-stone-400">{{ chapter.name_arabic }}</span>
-                      <div>
-                        <p class="font-medium text-[#18181B] dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">
-                          {{ chapter.name_simple }}
-                        </p>
-                      </div>
+                      <span class="text-arabic text-lg text-stone-400">{{ chapter.name_arabic }}</span>
+                      <span class="font-medium text-[#18181B] dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">
+                        {{ chapter.name_simple }}
+                      </span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 text-center">
+                  <td class="px-5 py-4 text-center">
                     <span 
-                      class="px-2 py-1 text-xs rounded-full"
+                      class="px-2 py-0.5 text-xs rounded-full"
                       :class="chapter.chapter_type === 'Meccan' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'"
                     >
-                      {{ chapter.chapter_type }}
+                      {{ chapter.chapter_type === 'Meccan' ? 'Meccan' : 'Medinan' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="font-mono text-sm text-stone-500 dark:text-stone-400">{{ chapter.verse_count }}</span>
+                  <td class="px-5 py-4 text-center">
+                    <span class="font-mono text-sm text-stone-500">{{ chapter.verse_count }}</span>
                   </td>
-                  <td class="px-6 py-4 text-center">
+                  <td class="px-5 py-4 text-center">
                     <span class="font-mono text-sm font-medium" :class="chapter.reflection_count > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-stone-400'">
                       {{ chapter.reflection_count }}
                     </span>
                   </td>
-                  <td class="px-6 py-4">
-                    <div class="flex gap-1 flex-wrap max-w-[300px]">
-                      <div 
-                        v-for="v in chapter.verses.slice(0, 50)" 
-                        :key="v.key"
-                        class="w-2 h-2 rounded-sm transition-transform hover:scale-150 cursor-pointer"
-                        :class="v.hasReflection ? 'bg-amber-500' : 'bg-stone-200 dark:bg-stone-700'"
-                        :title="`${v.key}${v.hasReflection ? ' - has reflection' : ''}`"
-                        @click.stop="openVersePanel(v.key)"
-                      ></div>
-                      <span v-if="chapter.verse_count > 50" class="text-xs text-stone-400 self-center ml-1">
-                        +{{ chapter.verse_count - 50 }}
+                  <td class="px-5 py-4">
+                    <div class="flex items-center gap-2">
+                      <div class="flex-1 h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden max-w-[120px]">
+                        <div 
+                          class="h-full bg-amber-500 rounded-full transition-all duration-300"
+                          :style="{ width: `${(chapter.reflection_count / chapter.verse_count) * 100}%` }"
+                        ></div>
+                      </div>
+                      <span class="text-xs text-stone-400 w-12 text-right">
+                        {{ Math.round((chapter.reflection_count / chapter.verse_count) * 100) }}%
                       </span>
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
-
-        <div class="text-center py-8">
-          <div class="inline-flex items-center gap-6 text-sm text-[#52525B] dark:text-stone-400">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-book-open" class="w-4 h-4" />
-              <span>Total Chapters: 114</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-document-text" class="w-4 h-4" />
-              <span>Total Verses: 6,236</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-4 h-4" />
-              <span>Reflected: {{ totalReflected }} ({{ completionPercentage }}%)</span>
-            </div>
           </div>
         </div>
       </template>
@@ -230,22 +219,26 @@
       <Teleport to="body">
         <div 
           v-if="selectedDay"
-          class="fixed inset-0 z-50 flex items-center justify-center"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
           @click.self="selectedDay = null"
         >
           <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="selectedDay = null"></div>
-          <div class="relative bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+          <div class="relative bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-2xl max-w-sm w-full animate-in">
             <button 
               @click="selectedDay = null"
-              class="absolute top-4 right-4 p-1 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full"
+              class="absolute top-4 right-4 p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors"
             >
               <UIcon name="i-heroicons-x-mark" class="w-5 h-5 text-stone-400" />
             </button>
-            <p class="text-2xl font-semibold text-[#18181B] dark:text-stone-100 mb-1">
-              {{ selectedDay.count }} {{ selectedDay.count === 1 ? 'reflection' : 'reflections' }}
+            <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100 mb-1">
+              {{ selectedDay.count }}
             </p>
-            <p class="text-stone-400">{{ formatDateFull(selectedDay.date) }}</p>
-            <p v-if="selectedDay.count === 0" class="text-stone-400 mt-4">No reflections on this day.</p>
+            <p class="text-stone-500 dark:text-stone-400 mb-1">
+              {{ selectedDay.count === 1 ? 'note' : 'notes' }} on {{ formatDateFull(selectedDay.date) }}
+            </p>
+            <p v-if="selectedDay.count === 0" class="text-sm text-stone-400 mt-3">
+              No notes were created on this day.
+            </p>
           </div>
         </div>
       </Teleport>
@@ -255,6 +248,14 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
+
+const user = useSupabaseUser()
+
+onMounted(() => {
+  if (!user.value) {
+    navigateTo('/login')
+  }
+})
 
 const router = useRouter()
 
@@ -279,10 +280,15 @@ interface ActivityDay {
   level: number
 }
 
+interface MonthLabel {
+  month: string
+  weekIndex: number
+}
+
 const chapters = ref<HeatmapChapter[]>([])
 const activityData = ref<{
   weeks: ActivityDay[][]
-  monthLabels: Array<{ month: string; weekIndex: number }>
+  monthLabels: MonthLabel[]
   totalContributions: number
   totalDays: number
 }>({ weeks: [], monthLabels: [], totalContributions: 0, totalDays: 0 })
@@ -312,9 +318,14 @@ function getContributionColor(level: number): string {
   }
 }
 
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00')
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 function formatDateFull(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const date = new Date(dateStr + 'T00:00:00')
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 function showDayActivity(day: ActivityDay) {
@@ -338,9 +349,26 @@ onMounted(async () => {
     chapters.value = heatmapRes.chapters || []
     activityData.value = activityRes
   } catch (e) {
-    console.error('Failed to load heatmap:', e)
+    console.error('Failed to load statistics:', e)
   } finally {
     loading.value = false
   }
 })
 </script>
+
+<style scoped>
+@keyframes animate-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-in {
+  animation: animate-in 0.2s ease-out;
+}
+</style>

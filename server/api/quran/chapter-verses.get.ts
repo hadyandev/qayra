@@ -27,8 +27,8 @@ export default defineEventHandler(async (event) => {
       {
         translations: translationIds,
         fields: 'verse_key,text_uthmani,translations',
-        per_page: numLimit,
-        page: Math.floor(numOffset / numLimit) + 1
+        from: numOffset + 1,
+        to: numOffset + numLimit
       },
       'content'
     )

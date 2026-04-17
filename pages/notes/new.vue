@@ -10,7 +10,7 @@
           Back to notes
         </NuxtLink>
         <h1 class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight">
-          New reflection
+          New note
         </h1>
         <p class="text-[#52525B] dark:text-stone-400 mt-3 text-lg">
           Capture your thought. Cite verses with @surah:ayah
@@ -23,7 +23,7 @@
             <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Title</label>
             <input 
               v-model="form.title" 
-              placeholder="Optional — give your reflection a title"
+              placeholder="Optional — give your note a title"
               class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:focus:ring-amber-400/30 transition-all duration-300"
             />
           </div>
@@ -109,7 +109,7 @@
             class="inline-flex items-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-full font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
           >
             <UIcon v-if="saving" name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
-            <span>{{ saving ? 'Saving...' : 'Save reflection' }}</span>
+            <span>{{ saving ? 'Saving...' : 'Save note' }}</span>
           </button>
           <NuxtLink 
             to="/notes" 
@@ -125,6 +125,11 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
+
+const user = useSupabaseUser()
+if (!user.value) {
+  navigateTo('/login')
+}
 
 const route = useRoute()
 const { sources, fetchSources, createSource } = useSources()

@@ -1,3 +1,18 @@
+const qfEnv = process.env.QF_ENV || 'live'
+
+const qfConfigMap = {
+  prelive: {
+    apiBase: 'https://apis-prelive.quran.foundation',
+    oauthTokenUrl: 'https://prelive-oauth2.quran.foundation/oauth2/token'
+  },
+  live: {
+    apiBase: 'https://apis.quran.foundation',
+    oauthTokenUrl: 'https://oauth2.quran.foundation/oauth2/token'
+  }
+}
+
+const qfConfig = qfConfigMap[qfEnv as keyof typeof qfConfigMap] || qfConfigMap.live
+
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxtjs/supabase', '@nuxtjs/color-mode'],
   colorMode: {
@@ -11,16 +26,23 @@ export default defineNuxtConfig({
       login: '/login',
       callback: '/confirm',
       exclude: ['/login', '/confirm', '/', '/browse', '/verse/*']
-    }
+    },
+    providers: [
+      {
+        name: 'google',
+        url: '/auth/login/google'
+      },
+      {
+        name: 'github',
+        url: '/auth/login/github'
+      }
+    ]
   },
   runtimeConfig: {
     qfClientId: process.env.QF_CLIENT_ID || process.env.QURAN_CLIENT_ID,
     qfClientSecret: process.env.QF_CLIENT_SECRET || process.env.QURAN_CLIENT_SECRET,
-    qfApiBase:
-      process.env.QF_API_BASE || 'https://apis-prelive.quran.foundation',
-    qfOAuthTokenUrl:
-      process.env.QF_OAUTH_TOKEN_URL ||
-      'https://prelive-oauth2.quran.foundation/oauth2/token',
+    qfApiBase: process.env.QF_API_BASE || qfConfig.apiBase,
+    qfOAuthTokenUrl: process.env.QF_OAUTH_TOKEN_URL || qfConfig.oauthTokenUrl,
     qfTranslationIds: process.env.QF_TRANSLATION_IDS || '85',
     public: {
       qfBase: process.env.NUXT_PUBLIC_QF_BASE || 'https://api.quran.foundation'

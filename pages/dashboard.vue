@@ -1,0 +1,288 @@
+<template>
+  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
+    <div class="max-w-5xl mx-auto px-6 py-12">
+      <!-- Greeting Section -->
+      <header class="mb-12">
+        <div class="flex items-start justify-between gap-6">
+          <div>
+            <p class="text-sm text-amber-600 dark:text-amber-500 font-medium mb-2">Assalamu'alaikum 👋</p>
+            <h1 class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight mb-2">
+              Welcome back
+            </h1>
+            <p class="text-[#52525B] dark:text-stone-400">
+              <span v-if="lastLogin">Last active: {{ lastLogin }}</span>
+              <span v-else>Start your reflection journey today</span>
+            </p>
+          </div>
+          <UButton 
+            to="/notes/new" 
+            class="bg-amber-600 hover:bg-amber-500 text-white rounded-full px-6 py-2.5 font-medium shadow-sm"
+            icon="i-heroicons-plus"
+          >
+            New Note
+          </UButton>
+        </div>
+      </header>
+
+      <!-- Quick Stats Grid -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Total Notes</span>
+          </div>
+          <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.totalNotes || 0 }}</p>
+        </div>
+
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Verses Cited</span>
+          </div>
+          <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.totalVerses || 0 }}</p>
+        </div>
+
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <UIcon name="i-heroicons-fire" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Streak</span>
+          </div>
+          <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.streakDays || 0 }}</p>
+          <p class="text-xs text-stone-400">days</p>
+        </div>
+
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <UIcon name="i-heroicons-bookmark" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Chapters</span>
+          </div>
+          <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.totalChapters || 0 }}</p>
+          <p class="text-xs text-stone-400">of 114</p>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Verse of the Day -->
+        <section class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-[2rem] p-8">
+          <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-4">
+            <UIcon name="i-heroicons-sparkles" class="w-5 h-5" />
+            <span class="text-sm font-medium uppercase tracking-wider">Verse of the Day</span>
+          </div>
+          <blockquote class="text-xl font-serif text-[#18181B] dark:text-stone-100 leading-relaxed mb-4">
+            "{{ featuredVerse?.text || 'Loading...' }}"
+          </blockquote>
+          <NuxtLink 
+            v-if="featuredVerse?.verseKey"
+            :to="`/verse/${featuredVerse.verseKey}`"
+            class="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors"
+          >
+            <span class="font-mono">@{{ featuredVerse.verseKey }}</span>
+            <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
+          </NuxtLink>
+        </section>
+
+        <!-- Recent Notes -->
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-medium text-[#18181B] dark:text-stone-100">Recent Notes</h2>
+            <NuxtLink to="/notes" class="text-sm text-amber-600 dark:text-amber-500 hover:text-amber-700">
+              View all →
+            </NuxtLink>
+          </div>
+          <div v-if="loadingNotes" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="h-20 bg-stone-100 dark:bg-stone-800 rounded-xl animate-pulse"></div>
+          </div>
+          <div v-else-if="recentNotes.length === 0" class="text-center py-8 bg-stone-50 dark:bg-stone-900/50 rounded-xl">
+            <p class="text-stone-400 mb-4">No notes yet</p>
+            <UButton to="/notes/new" variant="outline" class="rounded-full">
+              Create your first note
+            </UButton>
+          </div>
+          <div v-else class="space-y-3">
+            <NuxtLink
+              v-for="note in recentNotes"
+              :key="note.id"
+              :to="`/notes/${note.id}`"
+              class="block bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl p-4 hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-medium text-[#18181B] dark:text-stone-100 truncate">
+                    {{ note.title || 'Untitled Note' }}
+                  </h3>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-stone-400">
+                    <span>{{ formatDate(note.note_date || note.created_at) }}</span>
+                    <span v-if="note.source">• {{ note.source }}</span>
+                  </div>
+                </div>
+                <div v-if="note.verse_keys?.length" class="flex gap-1">
+                  <span 
+                    v-for="vk in note.verse_keys.slice(0, 2)" 
+                    :key="vk"
+                    class="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 rounded text-xs font-mono text-amber-600 dark:text-amber-400"
+                  >
+                    @{{ vk }}
+                  </span>
+                </div>
+              </div>
+            </NuxtLink>
+          </div>
+        </section>
+      </div>
+
+      <!-- Quick Actions -->
+      <section class="mt-12">
+        <h2 class="text-lg font-medium text-[#18181B] dark:text-stone-100 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <NuxtLink
+            to="/notes/new"
+            class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl p-4 text-center hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors"
+          >
+            <UIcon name="i-heroicons-plus" class="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+            <p class="text-sm font-medium text-[#18181B] dark:text-stone-100">New Note</p>
+          </NuxtLink>
+          <NuxtLink
+            to="/browse"
+            class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl p-4 text-center hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors"
+          >
+            <UIcon name="i-heroicons-book-open" class="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+            <p class="text-sm font-medium text-[#18181B] dark:text-stone-100">Browse Quran</p>
+          </NuxtLink>
+          <NuxtLink
+            to="/heatmap"
+            class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl p-4 text-center hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors"
+          >
+            <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+            <p class="text-sm font-medium text-[#18181B] dark:text-stone-100">My Stats</p>
+          </NuxtLink>
+          <button
+            @click="openSearch"
+            class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl p-4 text-center hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors"
+          >
+            <UIcon name="i-heroicons-magnifying-glass" class="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+            <p class="text-sm font-medium text-[#18181B] dark:text-stone-100">Search</p>
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+definePageMeta({ layout: 'default' })
+
+const user = useSupabaseUser()
+if (!user.value) {
+  navigateTo('/login')
+}
+
+const lastLogin = ref('')
+const loadingNotes = ref(true)
+const recentNotes = ref<Array<{
+  id: string
+  title: string | null
+  note_date: string | null
+  created_at: string
+  source: string | null
+  verse_keys?: string[]
+}>>([])
+
+const stats = ref({
+  totalNotes: 0,
+  totalVerses: 0,
+  totalChapters: 0,
+  streakDays: 0
+})
+
+const featuredVerse = ref<{
+  verseKey: string
+  text: string
+} | null>(null)
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function openSearch() {
+  const palette = document.querySelector('[data-command-palette]') as any
+  if (palette?.__vueParentComponent?.exposed?.open) {
+    palette.__vueParentComponent.exposed.open()
+  }
+}
+
+async function loadDashboard() {
+  try {
+    // Load notes
+    const { notes } = await $fetch<{ notes: typeof recentNotes.value }>('/api/notes')
+    recentNotes.value = (notes || []).slice(0, 5)
+    
+    // Calculate stats
+    const allVerseKeys = new Set<string>()
+    const allChapters = new Set<number>()
+    
+    notes?.forEach((note: any) => {
+      note.verse_keys?.forEach((vk: string) => {
+        allVerseKeys.add(vk)
+        const chapter = parseInt(vk.split(':')[0])
+        if (!isNaN(chapter)) allChapters.add(chapter)
+      })
+    })
+    
+    stats.value = {
+      totalNotes: notes?.length || 0,
+      totalVerses: allVerseKeys.size,
+      totalChapters: allChapters.size,
+      streakDays: 0
+    }
+  } catch (e) {
+    console.error('Failed to load dashboard:', e)
+  } finally {
+    loadingNotes.value = false
+  }
+}
+
+async function loadFeaturedVerse() {
+  try {
+    const randomChapter = Math.floor(Math.random() * 114) + 1
+    const { verses } = await $fetch<{ verses: Array<{ verse_key: string; translations?: Array<{ text: string }> }> }>(
+      `/api/quran/chapter-verses?chapter=${randomChapter}&limit=1`
+    )
+    if (verses?.length) {
+      const verse = verses[0]
+      const translation = verse.translations?.[0]?.text || ''
+      featuredVerse.value = {
+        verseKey: verse.verse_key,
+        text: translation.length > 150 ? translation.slice(0, 150) + '...' : translation
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load featured verse:', e)
+  }
+}
+
+onMounted(async () => {
+  if (user.value) {
+    // Set last login greeting
+    const now = new Date()
+    lastLogin.value = now.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    })
+    
+    await Promise.all([loadDashboard(), loadFeaturedVerse()])
+  }
+})
+</script>

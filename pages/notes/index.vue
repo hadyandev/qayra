@@ -107,7 +107,7 @@
         </div>
         <h3 class="text-xl font-medium text-[#18181B] dark:text-stone-100 mb-2">No notes found</h3>
         <p class="text-[#52525B] dark:text-stone-500 mb-6 max-w-sm">
-          {{ hasActiveFilters ? 'Try adjusting your search filters.' : 'Capture your first reflection to get started.' }}
+          {{ hasActiveFilters ? 'Try adjusting your search filters.' : 'Capture your first note to get started.' }}
         </p>
         <NuxtLink to="/notes/new" class="text-amber-600 dark:text-amber-500 font-medium hover:text-amber-700 transition-colors">
           {{ hasActiveFilters ? 'Clear filters' : 'Start writing' }} &rarr;
@@ -116,7 +116,7 @@
 
       <div v-else class="space-y-6 mt-8">
         <div class="flex items-center justify-between text-sm text-[#52525B] dark:text-stone-500">
-          <span>{{ notes.length }} {{ notes.length === 1 ? 'reflection' : 'reflections' }} found</span>
+          <span>{{ notes.length }} {{ notes.length === 1 ? 'note' : 'notes' }} found</span>
           <span v-if="hasActiveFilters" class="text-amber-600 dark:text-amber-500">Filtered results</span>
         </div>
 
@@ -180,6 +180,11 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
+
+const user = useSupabaseUser()
+if (!user.value) {
+  navigateTo('/login')
+}
 
 type NoteRow = {
   id: string

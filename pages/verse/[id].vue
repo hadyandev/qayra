@@ -53,6 +53,66 @@
             </p>
           </div>
 
+          <!-- Audio Recitation -->
+          <div v-else-if="loadingAudio" class="flex items-center gap-3 p-4 text-stone-400">
+            <div class="w-6 h-6 rounded-full border-2 border-stone-200 dark:border-stone-700 border-t-amber-500 animate-spin"></div>
+            <span class="text-sm">Loading audio...</span>
+          </div>
+          <div v-else-if="audio" class="bg-stone-50/50 dark:bg-stone-800/30 border border-stone-200/60 dark:border-stone-700/60 rounded-[1.5rem] p-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <UIcon name="i-heroicons-speaker-wave" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <span class="text-sm font-medium text-[#18181B] dark:text-stone-100">Audio Recitation</span>
+                <span v-if="audio.reciter" class="text-xs text-stone-400 ml-2">by {{ audio.reciter }}</span>
+              </div>
+            </div>
+            <audio controls class="w-full" :src="audio.url">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+
+          <!-- Tafsir Section -->
+          <div v-if="tafsir" class="bg-gradient-to-br from-amber-50/50 to-stone-50/50 dark:from-amber-950/20 dark:to-stone-950/20 border border-amber-200/40 dark:border-amber-800/40 rounded-[1.5rem] overflow-hidden">
+            <button 
+              @click="tafsirExpanded = !tafsirExpanded"
+              class="w-full flex items-center justify-between p-6 text-left hover:bg-amber-50/50 dark:hover:bg-amber-950/10 transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                  <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-[#18181B] dark:text-stone-100">Tafsir</span>
+                  <span class="text-xs text-stone-400 ml-2">by {{ tafsir.resourceName }}</span>
+                </div>
+              </div>
+              <UIcon 
+                :name="tafsirExpanded ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" 
+                class="w-5 h-5 text-stone-400 transition-transform" 
+              />
+            </button>
+            <Transition name="slide">
+              <div v-if="tafsirExpanded" class="px-6 pb-6">
+                <div class="border-t border-amber-200/40 dark:border-amber-800/40 pt-6">
+                  <p class="text-[#18181B] dark:text-stone-200 leading-relaxed whitespace-pre-wrap">
+                    {{ tafsir.text }}
+                  </p>
+                </div>
+              </div>
+            </Transition>
+          </div>
+          
+          <div v-else-if="loadingTafsir" class="bg-stone-50/50 dark:bg-stone-800/30 border border-stone-200/60 dark:border-stone-700/60 rounded-[1.5rem] p-6">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                <UIcon name="i-heroicons-book-open" class="w-4 h-4 text-stone-400 animate-pulse" />
+              </div>
+              <span class="text-sm text-stone-400">Loading tafsir...</span>
+            </div>
+          </div>
+
           <!-- Navigation -->
           <div class="flex items-center justify-between gap-4 py-4 border-t border-b border-stone-200/60 dark:border-stone-700/60">
             <NuxtLink 
@@ -101,7 +161,7 @@
           <div class="space-y-4">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-medium text-[#18181B] dark:text-stone-200 uppercase tracking-wide flex items-center gap-2">
-                <span>Reflections on @{{ id }}</span>
+                <span>Notes on @{{ id }}</span>
                 <span v-if="reflections.length > 0" class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded-full text-xs font-normal normal-case tracking-normal">
                   {{ reflections.length }} {{ reflections.length === 1 ? 'note' : 'notes' }}
                 </span>
@@ -111,7 +171,7 @@
                 :to="`/notes/new?verse=${encodeURIComponent(id)}`"
                 class="text-sm text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 transition-colors font-medium"
               >
-                + New reflection
+                + New note
               </NuxtLink>
             </div>
             
@@ -177,21 +237,21 @@
               <div class="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-3">
                 <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-6 h-6 text-stone-400" />
               </div>
-              <p class="text-sm text-[#52525B] dark:text-stone-400 mb-3">No reflections yet on this verse</p>
+              <p class="text-sm text-[#52525B] dark:text-stone-400 mb-3">No notes yet on this verse</p>
               <NuxtLink 
                 v-if="user"
                 :to="`/notes/new?verse=${encodeURIComponent(id)}`"
                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#18181B] dark:bg-amber-600 text-white rounded-full text-sm font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-colors"
               >
                 <UIcon name="i-heroicons-plus" class="w-4 h-4" />
-                Add the first reflection
+                Add the first note
               </NuxtLink>
               <NuxtLink 
                 v-else
                 to="/login"
                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100 rounded-full text-sm font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
               >
-                Sign in to add reflections
+                Sign in to add notes
               </NuxtLink>
             </div>
           </div>
@@ -264,6 +324,19 @@ const reflections = ref<Array<{
   created_at: string
 }>>([])
 const loadingReflections = ref(false)
+
+const tafsir = ref<{
+  text: string
+  resourceName: string
+} | null>(null)
+const loadingTafsir = ref(false)
+const tafsirExpanded = ref(false)
+
+const audio = ref<{
+  url: string
+  reciter: string | null
+} | null>(null)
+const loadingAudio = ref(false)
 
 const { verse } = useQuran()
 const user = useSupabaseUser()
@@ -342,6 +415,40 @@ async function loadRelatedVerses() {
   }
 }
 
+async function loadTafsir() {
+  loadingTafsir.value = true
+  try {
+    const data = await $fetch<{ tafsir: typeof tafsir.value }>(`/api/quran/tafsir?key=${encodeURIComponent(id)}`)
+    if (data.tafsir?.text) {
+      tafsir.value = {
+        text: data.tafsir.text,
+        resourceName: data.tafsir.resourceName || 'Tafsir'
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load tafsir:', e)
+  } finally {
+    loadingTafsir.value = false
+  }
+}
+
+async function loadAudio() {
+  loadingAudio.value = true
+  try {
+    const data = await $fetch<{ audio: typeof audio.value }>(`/api/quran/recitation?key=${encodeURIComponent(id)}`)
+    if (data.audio?.url) {
+      audio.value = {
+        url: data.audio.url,
+        reciter: data.audio.reciter
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load audio:', e)
+  } finally {
+    loadingAudio.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const result = await verse(id)
@@ -350,7 +457,7 @@ onMounted(async () => {
       if (result.translations?.length) {
         translation.value = result.translations[0].text
       }
-      await Promise.all([loadRelatedVerses(), loadReflections()])
+      await Promise.all([loadRelatedVerses(), loadReflections(), loadTafsir(), loadAudio()])
     } else {
       error.value = 'Verse not found'
     }
@@ -368,5 +475,25 @@ onMounted(async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 </style>

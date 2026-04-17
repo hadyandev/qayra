@@ -26,14 +26,16 @@ interface VerseData {
 export const useQuran = () => {
   const chapters = async (): Promise<Chapter[]> => {
     try {
+      console.log('[useQuran] Fetching chapters from /api/quran/chapters...')
       const response = await $fetch<{ chapters?: Chapter[]; error?: string }>('/api/quran/chapters')
       if (response.error) {
-        console.error('Chapters error:', response.error)
+        console.error('[useQuran] Chapters error:', response.error)
         return []
       }
+      console.log('[useQuran] Got chapters:', response.chapters?.length || 0)
       return response.chapters || []
     } catch (error) {
-      console.error('Chapters fetch error:', error)
+      console.error('[useQuran] Chapters fetch error:', error)
       return []
     }
   }

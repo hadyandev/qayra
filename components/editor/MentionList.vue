@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, onMounted } from 'vue'
 
 interface ChapterItem {
   id: number
@@ -75,11 +75,25 @@ const props = defineProps<{
 const selectedIndex = ref(0)
 const searchQuery = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
+const isReady = ref(false)
 
 watch(() => props.items, (newItems) => {
   selectedIndex.value = 0
   searchQuery.value = ''
 }, { deep: true })
+
+onMounted(async () => {
+  await nextTick()
+  isReady.value = true
+  searchInputRef.value?.focus()
+})
+
+watch(isReady, async (ready) => {
+  if (ready) {
+    await nextTick()
+    searchInputRef.value?.focus()
+  }
+})
 
 const isVerseMode = computed(() => {
   if (props.items.length === 0) return false
@@ -129,11 +143,6 @@ const displayItems = computed(() => {
 
 watch(searchQuery, () => {
   selectedIndex.value = 0
-})
-
-watch(isVerseMode, async () => {
-  await nextTick()
-  searchInputRef.value?.focus()
 })
 
 const onKeyDown = (event: KeyboardEvent) => {

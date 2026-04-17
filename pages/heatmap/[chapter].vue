@@ -157,8 +157,15 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+const user = useSupabaseUser()
 const route = useRoute()
 const chapterId = computed(() => parseInt(route.params.chapter as string))
+
+onMounted(() => {
+  if (!user.value) {
+    navigateTo('/login')
+  }
+})
 
 interface ChapterInfo {
   id: number

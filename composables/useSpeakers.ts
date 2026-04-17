@@ -1,5 +1,5 @@
 export const useSpeakers = () => {
-  const speakers = ref<Array<{ id: string; name: string }>>([])
+  const speakers = ref<Array<{ id: string; name: string; is_global?: boolean }>>([])
   const loading = ref(false)
   const error = ref('')
 
@@ -7,7 +7,7 @@ export const useSpeakers = () => {
     loading.value = true
     error.value = ''
     try {
-      const { speakers: data } = await $fetch<{ speakers: Array<{ id: string; name: string }> }>('/api/speakers')
+      const { speakers: data } = await $fetch<{ speakers: Array<{ id: string; name: string; is_global?: boolean }> }>('/api/speakers')
       speakers.value = data || []
     } catch (e: any) {
       error.value = e?.message || 'Failed to load speakers'
@@ -16,11 +16,11 @@ export const useSpeakers = () => {
     }
   }
 
-  const createSpeaker = async (name: string) => {
+  const createSpeaker = async (name: string, makeGlobal = false) => {
     try {
-      const { speaker } = await $fetch<{ speaker: { id: string; name: string } }>('/api/speakers', {
+      const { speaker } = await $fetch<{ speaker: { id: string; name: string; is_global?: boolean } }>('/api/speakers', {
         method: 'POST',
-        body: { name }
+        body: { name, makeGlobal }
       })
       if (speaker && !speakers.value.find(s => s.id === speaker.id)) {
         speakers.value.push(speaker)

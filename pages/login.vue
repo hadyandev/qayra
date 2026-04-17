@@ -4,16 +4,17 @@
       <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-[2rem] p-8 md:p-10 ring-1 ring-stone-200/30 dark:ring-stone-800/30">
         <header class="text-center mb-10">
           <div class="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-4">
-            <UIcon name="i-heroicons-envelope" class="w-6 h-6 text-[#52525B] dark:text-stone-400" />
+            <UIcon name="i-heroicons-book-open" class="w-6 h-6 text-[#52525B] dark:text-stone-400" />
           </div>
           <h1 class="text-3xl font-light text-[#18181B] dark:text-stone-100 tracking-tight mb-2">
-            Welcome back
+            Welcome to Qayra
           </h1>
           <p class="text-[#52525B] dark:text-stone-400">
-            Sign in to access your reflections
+            Sign in to access your notes
           </p>
         </header>
 
+        <!-- Magic Link Form -->
         <form @submit.prevent="onSubmit" class="space-y-6">
           <div class="space-y-1.5">
             <label for="email" class="text-sm font-medium text-[#18181B] dark:text-stone-200">Email</label>
@@ -31,7 +32,7 @@
           <button 
             type="submit" 
             :disabled="pending"
-            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-full font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
           >
             <UIcon v-if="pending" name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
             <span>{{ pending ? 'Sending link...' : 'Send magic link' }}</span>

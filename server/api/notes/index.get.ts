@@ -3,6 +3,11 @@ import { createError, getQuery } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
+  
+  const { data: { user } } = await client.auth.getUser()
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized - please sign in' })
+  }
 
   const query = getQuery(event)
   const source = (query.source as string) || undefined
@@ -13,6 +18,7 @@ export default defineEventHandler(async (event) => {
   let q = client
     .from('notes')
     .select('*')
+    .eq('user_id', user.id)
     .order('note_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 

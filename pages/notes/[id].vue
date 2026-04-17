@@ -3,7 +3,7 @@
     <div v-if="loading" class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-4">
         <div class="w-12 h-12 rounded-full border-2 border-stone-200 dark:border-stone-700 border-t-amber-500 animate-spin"></div>
-        <p class="text-[#52525B] dark:text-stone-400">Loading reflection...</p>
+        <p class="text-[#52525B] dark:text-stone-400">Loading note...</p>
       </div>
     </div>
 
@@ -23,13 +23,13 @@
             <div class="space-y-4 flex-1">
               <!-- View Mode: Title -->
               <h1 v-if="!isEditing" class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight">
-                {{ note.title || 'Untitled Reflection' }}
+                {{ note.title || 'Untitled Note' }}
               </h1>
               <!-- Edit Mode: Title Input -->
               <input 
                 v-else
                 v-model="form.title" 
-                placeholder="Optional — give your reflection a title"
+                placeholder="Optional — give your note a title"
                 class="w-full px-4 py-3 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
               />
               
@@ -206,8 +206,8 @@
       <div class="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center mx-auto mb-6">
         <UIcon name="i-heroicons-document-text" class="w-8 h-8 text-stone-300 dark:text-stone-600" />
       </div>
-      <h2 class="text-2xl font-medium text-[#18181B] dark:text-stone-100 mb-2">Reflection not found</h2>
-      <p class="text-[#52525B] dark:text-stone-400 mb-6">This reflection may have been deleted or doesn't exist.</p>
+      <h2 class="text-2xl font-medium text-[#18181B] dark:text-stone-100 mb-2">Note not found</h2>
+      <p class="text-[#52525B] dark:text-stone-400 mb-6">This note may have been deleted or doesn't exist.</p>
       <NuxtLink to="/notes" class="text-amber-600 dark:text-amber-500 font-medium hover:text-amber-700 transition-colors">Back to notes &rarr;</NuxtLink>
     </div>
   </div>
@@ -215,6 +215,11 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
+
+const user = useSupabaseUser()
+if (!user.value) {
+  navigateTo('/login')
+}
 
 const route = useRoute()
 const id = computed(() => route.params.id as string)
@@ -344,7 +349,7 @@ async function save() {
 }
 
 function confirmDelete() {
-  if (confirm('Delete this reflection? This cannot be undone.')) {
+  if (confirm('Delete this note? This cannot be undone.')) {
     remove()
   }
 }

@@ -18,7 +18,7 @@
               <div>
                 <span class="font-mono text-lg text-amber-600 dark:text-amber-500 font-semibold">@{{ verseKey }}</span>
                 <span class="text-sm text-stone-400 ml-2">
-                  {{ reflections.length }} {{ reflections.length === 1 ? 'reflection' : 'reflections' }}
+                  {{ reflections.length }} {{ reflections.length === 1 ? 'note' : 'notes' }}
                 </span>
               </div>
             </div>
@@ -94,15 +94,15 @@
             <div class="w-20 h-20 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-6">
               <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-10 h-10 text-stone-400" />
             </div>
-            <h3 class="text-lg font-medium text-[#18181B] dark:text-stone-100 mb-2">No reflections yet</h3>
-            <p class="text-sm text-[#52525B] dark:text-stone-400 mb-6">Be the first to add your reflection on this verse!</p>
+            <h3 class="text-lg font-medium text-[#18181B] dark:text-stone-100 mb-2">No notes yet</h3>
+            <p class="text-sm text-[#52525B] dark:text-stone-400 mb-6">Be the first to add a note on this verse!</p>
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
               <NuxtLink 
                 :to="`/notes/new?verse=${encodeURIComponent(verseKey)}`"
                 class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-xl font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-colors"
               >
                 <UIcon name="i-heroicons-plus" class="w-5 h-5" />
-                Add reflection
+                Add note
               </NuxtLink>
               <NuxtLink 
                 :to="`/verse/${verseKey}`"

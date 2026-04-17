@@ -1,4 +1,12 @@
 {
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=ouehzbkiyutfsfjeaonq",
+      "enabled": true
+    }
+  },
   "mcpServers": {
     "qf-api": {
       "command": "npx",

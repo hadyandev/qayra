@@ -12,8 +12,9 @@ export default defineEventHandler(async (event) => {
 
   const { data: sources, error } = await client
     .from('sources')
-    .select('id, name')
-    .eq('user_id', user.id)
+    .select('id, name, is_global')
+    .or(`user_id.eq.${user.id},is_global.eq.true`)
+    .order('is_global', { ascending: false })
     .order('name')
 
   if (error) {
