@@ -184,24 +184,6 @@ const error = ref('')
 const searchQuery = ref('')
 const activeFilter = ref('all')
 
-const filters = computed(() => {
-  const base = [
-    { id: 'all', label: 'All' },
-    { id: 'meccan', label: 'Makkiyah' },
-    { id: 'medinan', label: 'Madaniyah' },
-  ]
-  
-  // Add topics
-  const topicFilters = quranTopics.slice(0, 4).map(t => ({
-    id: `topic:${t.slug}`,
-    label: t.name,
-    icon: t.icon,
-    isTopic: true
-  }))
-  
-  return [...base, ...topicFilters]
-})
-
 const allFilters = quranTopics.map(t => ({
   id: `topic:${t.slug}`,
   label: t.name
@@ -212,14 +194,6 @@ const mainFilters = computed(() => [
   { id: 'meccan', label: 'Makkiyah' },
   { id: 'medinan', label: 'Madaniyah' },
 ])
-
-const topicFilters = computed(() => 
-  quranTopics.map(t => ({
-    id: `topic:${t.slug}`,
-    label: t.name,
-    icon: t.icon
-  }))
-)
 
 const topicVersesData = ref<Array<{
   verse_key: string
@@ -384,6 +358,12 @@ async function handleFilterChange() {
 }
 
 onMounted(async () => {
+  const route = useRoute()
+  const queryFilter = route.query.filter as string | undefined
+  if (queryFilter && (queryFilter.startsWith('topic:') || queryFilter === 'meccan' || queryFilter === 'medinan')) {
+    activeFilter.value = queryFilter
+  }
+  
   try {
     console.log('[Browse] Loading chapters...')
     chapters.value = await getChapters()
@@ -393,6 +373,9 @@ onMounted(async () => {
     }
     if (user.value) {
       await loadUserReflections()
+    }
+    if (activeTopic.value) {
+      await loadTopicVerses()
     }
   } catch (err: any) {
     console.error('[Browse] Error:', err)

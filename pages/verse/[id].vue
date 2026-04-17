@@ -25,13 +25,46 @@
       />
 
       <template v-else-if="verseData">
-        <header class="mb-12 text-center">
-          <div class="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-sm font-mono text-[#52525B] dark:text-stone-400 mb-6">
-            @{{ id }}
+        <header class="mb-12">
+          <div class="flex items-center gap-2 text-sm text-[#52525B] dark:text-stone-400 mb-4">
+            <NuxtLink to="/browse" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Chapters</NuxtLink>
+            <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
+            <NuxtLink :to="`/browse?filter=topic:${verseTopics[0]?.slug}`" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">
+              {{ chapterInfo?.name }}
+            </NuxtLink>
           </div>
-          <h1 class="text-3xl md:text-4xl font-light text-[#18181B] dark:text-stone-100 tracking-tight">
-            {{ verseData.chapter_id ? `Surah ${verseData.chapter_id}, Ayat ${verseData.verse_number || id.split(':')[1]}` : id }}
-          </h1>
+          
+          <div v-if="chapterInfo" class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 class="text-3xl md:text-4xl font-light text-[#18181B] dark:text-stone-100 tracking-tight">
+                {{ chapterInfo.name }}
+                <span class="text-2xl md:text-3xl font-arabic opacity-60 ml-3">{{ verseData.chapter_name_arabic || '' }}</span>
+              </h1>
+              <p v-if="chapterInfo.meaning" class="text-[#52525B] dark:text-stone-400 mt-1">
+                {{ chapterInfo.meaning }}
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1.5 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-medium text-[#52525B] dark:text-stone-400">
+                {{ verseData.verse_number || verseNum }} / {{ verseData.total_verses || '?' }}
+              </span>
+              <span v-if="chapterInfo.revelation" class="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/40 rounded-full text-xs font-medium text-amber-700 dark:text-amber-400 capitalize">
+                {{ chapterInfo.revelation }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="verseTopics.length > 0" class="flex flex-wrap gap-2">
+            <NuxtLink 
+              v-for="topic in verseTopics" 
+              :key="topic.slug"
+              :to="`/browse?filter=topic:${topic.slug}`"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200/60 dark:border-amber-700/50 rounded-full text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+            >
+              <UIcon :name="topic.icon" class="w-4 h-4" />
+              {{ topic.name }}
+            </NuxtLink>
+          </div>
         </header>
 
         <div class="space-y-12">
@@ -133,25 +166,44 @@
             </NuxtLink>
           </div>
 
-          <!-- Related Verses from Same Surah -->
-          <div v-if="relatedVerses.length > 0" class="space-y-4">
+          <!-- Related Verses (by topic first, then same surah) -->
+          <div v-if="relatedByTopic.length > 0 || relatedVerses.length > 0" class="space-y-4">
             <h3 class="text-sm font-medium text-[#18181B] dark:text-stone-200 uppercase tracking-wide">
-              More from Surah {{ verseData.chapter_id }}
+              Related Verses
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <NuxtLink 
-                v-for="v in relatedVerses"
-                :key="v.verse_key"
-                :to="`/verse/${v.verse_key}`"
-                class="group p-4 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-xl hover:border-amber-200/60 dark:hover:border-amber-700/50 transition-colors"
-              >
-                <div class="flex items-start gap-3">
-                  <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
-                  <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
-                    {{ v.translation }}
-                  </p>
-                </div>
-              </NuxtLink>
+              <template v-if="relatedByTopic.length > 0">
+                <NuxtLink 
+                  v-for="v in relatedByTopic.slice(0, 4)"
+                  :key="v.verse_key"
+                  :to="`/verse/${v.verse_key}`"
+                  class="group p-4 bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/40 dark:border-amber-800/40 rounded-xl hover:border-amber-300 dark:hover:border-amber-700/50 transition-colors"
+                >
+                  <div class="flex items-start gap-3">
+                    <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/50 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
+                    <div class="flex-1 min-w-0">
+                      <span class="text-sm font-medium text-amber-700 dark:text-amber-400">
+                        {{ v.topic }}
+                      </span>
+                    </div>
+                  </div>
+                </NuxtLink>
+              </template>
+              <template v-else>
+                <NuxtLink 
+                  v-for="v in relatedVerses.slice(0, 4)"
+                  :key="v.verse_key"
+                  :to="`/verse/${v.verse_key}`"
+                  class="group p-4 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-xl hover:border-amber-200/60 dark:hover:border-amber-700/50 transition-colors"
+                >
+                  <div class="flex items-start gap-3">
+                    <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
+                    <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
+                      {{ v.translation }}
+                    </p>
+                  </div>
+                </NuxtLink>
+              </template>
             </div>
           </div>
 
@@ -236,21 +288,27 @@
                 <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-6 h-6 text-stone-400" />
               </div>
               <p class="text-sm text-[#52525B] dark:text-stone-400 mb-3">No notes yet on this verse</p>
-              <NuxtLink 
-                v-if="user"
-                :to="`/notes/new?verse=${encodeURIComponent(id)}`"
-                class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#18181B] dark:bg-amber-600 text-white rounded-full text-sm font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-colors"
-              >
-                <UIcon name="i-heroicons-plus" class="w-4 h-4" />
-                Add the first note
-              </NuxtLink>
-              <NuxtLink 
-                v-else
-                to="/login"
-                class="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100 rounded-full text-sm font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
-              >
-                Sign in to add notes
-              </NuxtLink>
+              <template v-if="user">
+                <NuxtLink 
+                  :to="`/notes/new?verse=${encodeURIComponent(id)}`"
+                  class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#18181B] dark:bg-amber-600 text-white rounded-full text-sm font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-colors"
+                >
+                  <UIcon name="i-heroicons-plus" class="w-4 h-4" />
+                  Add the first note
+                </NuxtLink>
+              </template>
+              <template v-else>
+                <div class="space-y-3">
+                  <p class="text-xs text-stone-500 dark:text-stone-400">Sign in to capture your reflections on this verse</p>
+                  <NuxtLink 
+                    to="/login"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100 rounded-full text-sm font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+                  >
+                    <UIcon name="i-heroicons-arrow-right-end-on-rectangle" class="w-4 h-4" />
+                    Sign in to add notes
+                  </NuxtLink>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -297,6 +355,9 @@
 </template>
 
 <script setup lang="ts">
+import { quranTopics } from '~/data/quranTopics'
+import { surahMeanings } from '~/data/surahMeanings'
+
 definePageMeta({ layout: 'default' })
 
 const route = useRoute()
@@ -305,7 +366,11 @@ const id = route.params.id as string
 const verseData = ref<{
   text: string
   chapter_id?: number
+  chapter_name?: string
+  chapter_name_arabic?: string
   verse_number?: number
+  total_verses?: number
+  revelation_place?: string
   translations?: { text: string }[]
 } | null>(null)
 const translation = ref('')
@@ -349,6 +414,36 @@ const prevVerse = computed(() => {
 const nextVerse = computed(() => {
   if (!verseNum) return null
   return `${chapter}:${verseNum + 1}`
+})
+
+const chapterInfo = computed(() => {
+  if (!chapter) return null
+  return {
+    id: chapter,
+    name: verseData.value?.chapter_name || `Surah ${chapter}`,
+    meaning: surahMeanings[chapter] || '',
+    revelation: verseData.value?.revelation_place || ''
+  }
+})
+
+const verseTopics = computed(() => {
+  return quranTopics.filter(t => t.verses.includes(id))
+})
+
+const relatedByTopic = computed(() => {
+  if (verseTopics.value.length === 0) return []
+  const allRelatedVerses: Array<{ verse_key: string; translation: string; topic: string }> = []
+  for (const topic of verseTopics.value) {
+    for (const verseKey of topic.verses) {
+      if (verseKey !== id) {
+        allRelatedVerses.push({
+          verse_key: verseKey,
+          topic: topic.name
+        })
+      }
+    }
+  }
+  return allRelatedVerses.slice(0, 8)
 })
 
 function shareVerse() {

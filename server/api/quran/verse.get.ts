@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
       path,
       {
         translations: translationIds,
-        fields: 'verse_key,text_uthmani,text_imlaei_simple,chapter',
+        fields: 'verse_key,text_uthmani,text_imlaei_simple,chapter,verse_number',
         tafsirs: '168,169',
         reciter: '1'
       },
@@ -59,6 +59,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const chapterRaw = verse.chapter as Record<string, unknown> | undefined
+    const verseNumber = Number(verse.verse_number ?? 0)
 
     return {
       verse: {
@@ -71,6 +72,11 @@ export default defineEventHandler(async (event) => {
         tafsir: tafsirText ? { text: tafsirText, resourceName: tafsirName } : null,
         audio: audioUrl ? { url: audioUrl, reciter: reciterName } : null,
         chapter_id: chapterRaw ? Number(chapterRaw.id) : undefined,
+        chapter_name: chapterRaw ? String(chapterRaw.name_simple ?? '') : '',
+        chapter_name_arabic: chapterRaw ? String(chapterRaw.name_arabic ?? '') : '',
+        verse_number: verseNumber,
+        total_verses: chapterRaw ? Number(chapterRaw.verses_count ?? 0) : 0,
+        revelation_place: chapterRaw ? String(chapterRaw.revelation_place ?? '') : '',
         surah: chapterRaw
           ? {
               id: Number(chapterRaw.id),
