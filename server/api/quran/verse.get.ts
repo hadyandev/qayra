@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const translationIds = (config.qfTranslationIds as string) || '20'
+    const translationIds = (config.qfTranslationIds as string) || '85'
     const path = `/content/api/v4/verses/by_key/${encodeURIComponent(key)}`
     const data = await qfFetchJson<{
       verse?: Record<string, unknown>
@@ -18,7 +18,9 @@ export default defineEventHandler(async (event) => {
       path,
       {
         translations: translationIds,
-        fields: 'verse_key,text_uthmani,text_imlaei_simple,translations,chapter'
+        fields: 'verse_key,text_uthmani,text_imlaei_simple,chapter',
+        tafsirs: '168,169',
+        reciter: '1'
       },
       'content'
     )
@@ -28,11 +30,33 @@ export default defineEventHandler(async (event) => {
       return { error: 'Verse not found', verse: null }
     }
 
+    // Translations
     const translationsRaw = (verse.translations as Record<string, unknown>[]) || []
     const translations = translationsRaw.map((t) => ({
       text: String(t.text ?? ''),
       resource_name: String(t.resource_name ?? t.resourceName ?? '')
     }))
+
+    // Tafsir
+    const tafsirsRaw = (verse.tafsirs as Record<string, unknown>[]) || []
+    let tafsirText = null
+    let tafsirName = null
+    for (const t of tafsirsRaw) {
+      if (t.text) {
+        tafsirText = String(t.text)
+        tafsirName = String(t.resource_name ?? t.resourceName ?? 'Tafsir')
+        break
+      }
+    }
+
+    // Audio
+    const audioRaw = verse.audio as Record<string, unknown> | undefined
+    let audioUrl = null
+    let reciterName = null
+    if (audioRaw?.url) {
+      audioUrl = String(audioRaw.url)
+      reciterName = String(audioRaw.reciter_name ?? audioRaw.reciterName ?? '')
+    }
 
     const chapterRaw = verse.chapter as Record<string, unknown> | undefined
 
@@ -44,6 +68,8 @@ export default defineEventHandler(async (event) => {
         text_uthmani: String(verse.text_uthmani ?? ''),
         text_imlaei_simple: String(verse.text_imlaei_simple ?? ''),
         translations,
+        tafsir: tafsirText ? { text: tafsirText, resourceName: tafsirName } : null,
+        audio: audioUrl ? { url: audioUrl, reciter: reciterName } : null,
         chapter_id: chapterRaw ? Number(chapterRaw.id) : undefined,
         surah: chapterRaw
           ? {

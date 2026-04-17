@@ -96,9 +96,7 @@
             <Transition name="slide">
               <div v-if="tafsirExpanded" class="px-6 pb-6">
                 <div class="border-t border-amber-200/40 dark:border-amber-800/40 pt-6">
-                  <p class="text-[#18181B] dark:text-stone-200 leading-relaxed whitespace-pre-wrap">
-                    {{ tafsir.text }}
-                  </p>
+                  <div class="tafsir-content text-[#18181B] dark:text-stone-200 leading-relaxed" v-html="tafsir.text"></div>
                 </div>
               </div>
             </Transition>
@@ -415,39 +413,7 @@ async function loadRelatedVerses() {
   }
 }
 
-async function loadTafsir() {
-  loadingTafsir.value = true
-  try {
-    const data = await $fetch<{ tafsir: typeof tafsir.value }>(`/api/quran/tafsir?key=${encodeURIComponent(id)}`)
-    if (data.tafsir?.text) {
-      tafsir.value = {
-        text: data.tafsir.text,
-        resourceName: data.tafsir.resourceName || 'Tafsir'
-      }
-    }
-  } catch {
-    // Silently skip - tafsir not available
-  } finally {
-    loadingTafsir.value = false
-  }
-}
 
-async function loadAudio() {
-  loadingAudio.value = true
-  try {
-    const data = await $fetch<{ audio: typeof audio.value }>(`/api/quran/recitation?key=${encodeURIComponent(id)}`)
-    if (data.audio?.url) {
-      audio.value = {
-        url: data.audio.url,
-        reciter: data.audio.reciter
-      }
-    }
-  } catch {
-    // Silently skip - audio not available
-  } finally {
-    loadingAudio.value = false
-  }
-}
 
 onMounted(async () => {
   try {
@@ -457,7 +423,20 @@ onMounted(async () => {
       if (result.translations?.length) {
         translation.value = result.translations[0].text
       }
-      await Promise.all([loadRelatedVerses(), loadReflections(), loadTafsir(), loadAudio()])
+      // Use tafsir and audio from combined verse API response
+      if (result.tafsir?.text) {
+        tafsir.value = {
+          text: result.tafsir.text,
+          resourceName: result.tafsir.resourceName || 'Tafsir'
+        }
+      }
+      if (result.audio?.url) {
+        audio.value = {
+          url: result.audio.url,
+          reciter: result.audio.reciter
+        }
+      }
+      await Promise.all([loadRelatedVerses(), loadReflections()])
     } else {
       error.value = 'Verse not found'
     }

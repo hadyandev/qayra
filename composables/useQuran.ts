@@ -15,6 +15,8 @@ interface VerseData {
   text_uthmani: string
   text_imlaei: string
   translations: { text: string; resource_name: string }[]
+  tafsir?: { text: string; resourceName: string } | null
+  audio?: { url: string; reciter: string } | null
   surah: {
     id: number
     name_complex: string

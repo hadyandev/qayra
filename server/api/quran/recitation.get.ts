@@ -1,9 +1,9 @@
 import { getQuery } from 'h3'
 import { qfFetchJson } from '../../utils/qfHttp'
 
-interface AudioResult {
-  url: string | null
-  reciter: string | null
+interface AudioFile {
+  verse_key: string
+  url: string
 }
 
 export default defineEventHandler(async (event) => {
@@ -11,40 +11,42 @@ export default defineEventHandler(async (event) => {
   const reciterId = getQuery(event).reciter_id as string || '1'
 
   if (!key) {
-    return { error: 'Verse key is required', audio: null as AudioResult | null }
+    return { error: 'Verse key is required', audio: null }
   }
 
   try {
-    const path = `/content/api/v4/verses/by_key/${encodeURIComponent(key)}/recitations`
-    const data = await qfFetchJson<{
-      audio_files?: Record<string, unknown>[]
-    }>(path, undefined, 'content')
-
-    const audioFiles = data.audio_files as Record<string, unknown>[] | undefined
+    // Try different recitation IDs (ayah-by-ayah recitations)
+    const recitationIds = ['1', '2', '3', '4', '5']
+    let foundAudio: { url: string; reciter: string | null } | null = null
     
-    let audioUrl: string | null = null
-    let reciterName: string | null = null
-
-    if (audioFiles && audioFiles.length > 0) {
-      const selected = reciterId 
-        ? audioFiles.find((a: any) => String(a.reciter_id) === reciterId)
-        : audioFiles[0]
-      
-      if (selected) {
-        audioUrl = selected.audio_url || selected.url || null
-        reciterName = selected.reciter_name || selected.reciterName || null
+    for (const recId of recitationIds) {
+      try {
+        const path = `/content/api/v4/recitations/${recId}/ayahs/${encodeURIComponent(key)}`
+        const data = await qfFetchJson<{
+          audio_files?: AudioFile[]
+          pagination?: { total_records?: number }
+        }>(path, undefined, 'content')
+        
+        if (data.audio_files && data.audio_files.length > 0) {
+          const audio = data.audio_files[0]
+          // URL might be relative, construct full URL if needed
+          let audioUrl = audio.url
+          if (audioUrl && !audioUrl.startsWith('http')) {
+            audioUrl = `https://verses.quran.foundation/${audioUrl}`
+          }
+          foundAudio = { url: audioUrl, reciter: `Reciter ${recId}` }
+          break
+        }
+      } catch {
+        continue
       }
     }
 
     return {
-      audio: audioUrl ? { url: audioUrl, reciter: reciterName } : null,
+      audio: foundAudio,
       error: null
     }
   } catch (error: any) {
-    console.error('Recitation API Error:', error?.message || error)
-    return {
-      error: null,
-      audio: null
-    }
+    return { error: null, audio: null }
   }
 })
