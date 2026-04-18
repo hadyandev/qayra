@@ -1,4 +1,5 @@
 import { hadithBookInfo } from '../../utils/hadithData'
+import { getIndexedSections } from '../../utils/hadithFetch'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -11,15 +12,24 @@ export default defineEventHandler(async (event) => {
         return { books: [], error: `Collection '${collection}' not found` }
       }
       
+      let sections = []
+      try {
+        sections = getIndexedSections(collection) || []
+      } catch (e) {
+        console.log('[Books] No sections found, using defaults')
+      }
+      
       const books = []
       for (let i = 1; i <= info.chapters; i++) {
+        const section = sections.find((s: any) => s.id === i || s.number === i)
         books.push({
           slug: i.toString(),
-          name: `Book ${i}`,
-          hadithCount: info.hadithCount || 0,
+          name: section?.title || `Book ${i}`,
+          hadithCount: section?.hadiths?.length || info.hadithCount,
           chapterNumber: i,
           grade: info.grade,
-          description: info.description || ''
+          introduction: section?.introduction || section?.preface || '',
+          book: section?.book || ''
         })
       }
       return { books, error: null }

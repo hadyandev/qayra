@@ -1,12 +1,11 @@
 import { hadithEditions, hadithBookInfo } from '../../utils/hadithData'
-import { getIndexedHadiths } from '../../utils/hadithFetch'
+import { getIndexedHadiths, getIndexedSections } from '../../utils/hadithFetch'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const collection = query.collection as string
   const bookNumber = query.bookNumber as string
-  const page = Number(query.page) || 1
-  const limit = Number(query.limit) || 50
+  const limit = Number(query.limit) || 100
 
   if (!collection || !bookNumber) {
     return { hadiths: [], error: 'Collection and bookNumber are required' }
@@ -20,6 +19,7 @@ export default defineEventHandler(async (event) => {
   try {
     const hadithMap = await getIndexedHadiths(editionKey)
     const allHadiths = Array.from(hadithMap.values())
+    const sections = getIndexedSections(editionKey)
     
     const bookNum = parseInt(bookNumber)
     const filteredHadiths = allHadiths.filter((h: any) => {
@@ -27,17 +27,28 @@ export default defineEventHandler(async (event) => {
       return chapterId === bookNum
     })
 
-    const total = filteredHadiths.length
+    const bookSection = sections.find((s: any) => s.id === bookNum || s.number === bookNum)
+    
     const paginated = filteredHadiths.slice(0, limit).map((h: any) => ({
       hadithnumber: h.hadithnumber || h.hadithNumber,
-      text: h.text?.replace(/<[^>]*>/g, '').slice(0, 200) || h.body?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
+      text: h.text?.replace(/<[^>]*>/g, '').slice(0, 250) || h.body?.replace(/<[^>]*>/g, '').slice(0, 250) || '',
       chapterId: h.chapterId || h.chapter_number,
-      chapterTitle: h.chapterTitle
+      chapterTitle: h.chapterTitle,
+      grade: h.grade || h.grades?.[0]?.grade || 'Sahih',
+      grades: h.grades,
+      reference: h.reference,
+      arabicNumber: h.arabicnumber
     }))
 
     return {
       hadiths: paginated,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      bookInfo: {
+        number: bookNum,
+        title: bookSection?.title || `Book ${bookNum}`,
+        introduction: bookSection?.introduction || bookSection?.preface || '',
+        book: bookSection?.book || ''
+      },
+      total: filteredHadiths.length,
       error: null
     }
   } catch (error: any) {
