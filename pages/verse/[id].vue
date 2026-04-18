@@ -30,7 +30,7 @@
             <NuxtLink to="/browse" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Chapters</NuxtLink>
             <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
             <NuxtLink :to="`/browse?filter=topic:${verseTopics[0]?.slug}`" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">
-              {{ chapterInfo?.name }}
+              {{ chapterInfo?.name_simple || chapterInfo?.name || 'Chapter ' + chapter }}
             </NuxtLink>
           </div>
           
@@ -46,7 +46,7 @@
             </div>
             <div class="flex items-center gap-3">
               <span class="px-3 py-1.5 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-medium text-[#52525B] dark:text-stone-400">
-                {{ verseData.verse_number || verseNum }} / {{ verseData.total_verses || '?' }}
+                {{ verseData.verse_number }} / {{ verseData.total_verses }}
               </span>
               <span v-if="chapterInfo.revelation" class="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/40 rounded-full text-xs font-medium text-amber-700 dark:text-amber-400 capitalize">
                 {{ chapterInfo.revelation }}
@@ -106,33 +106,28 @@
             </audio>
           </div>
 
-          <!-- Tafsir Section -->
-          <div v-if="tafsir" class="bg-gradient-to-br from-amber-50/50 to-stone-50/50 dark:from-amber-950/20 dark:to-stone-950/20 border border-amber-200/40 dark:border-amber-800/40 rounded-[1.5rem] overflow-hidden">
+<!-- Tafsir Section - Expandable -->
+          <div v-if="tafsirSources.length > 0" class="bg-gradient-to-br from-amber-50/50 to-stone-50/50 dark:from-amber-950/20 dark:to-stone-950/20 border border-amber-200/40 dark:border-amber-800/40 rounded-[1.5rem] overflow-hidden">
             <button 
+              class="w-full p-6 flex items-center justify-between"
               @click="tafsirExpanded = !tafsirExpanded"
-              class="w-full flex items-center justify-between p-6 text-left hover:bg-amber-50/50 dark:hover:bg-amber-950/10 transition-colors"
             >
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                   <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
-                <div>
-                  <span class="text-sm font-medium text-[#18181B] dark:text-stone-100">Tafsir</span>
-                  <span class="text-xs text-stone-400 ml-2">by {{ tafsir.resourceName }}</span>
-                </div>
+                <span class="text-sm font-medium text-[#18181B] dark:text-stone-100">Tafsir</span>
+                <span class="text-xs text-stone-400">({{ tafsirSources[0] }})</span>
               </div>
               <UIcon 
                 :name="tafsirExpanded ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" 
-                class="w-5 h-5 text-stone-400 transition-transform" 
+                class="w-5 h-5 text-stone-400"
               />
             </button>
-            <Transition name="slide">
-              <div v-if="tafsirExpanded" class="px-6 pb-6">
-                <div class="border-t border-amber-200/40 dark:border-amber-800/40 pt-6">
-                  <div class="tafsir-content text-[#18181B] dark:text-stone-200 leading-relaxed" v-html="tafsir.text"></div>
-                </div>
-              </div>
-            </Transition>
+            
+            <div v-if="tafsirExpanded" class="px-6 pb-6 border-t border-amber-200/40 dark:border-amber-800/40 pt-4">
+              <div class="tafsir-content text-[#18181B] dark:text-stone-200 leading-relaxed" v-html="selectedTafsirContent"></div>
+            </div>
           </div>
           
           <div v-else-if="loadingTafsir" class="bg-stone-50/50 dark:bg-stone-800/30 border border-stone-200/60 dark:border-stone-700/60 rounded-[1.5rem] p-6">
@@ -144,26 +139,26 @@
             </div>
           </div>
 
-          <!-- Navigation -->
-          <div class="flex items-center justify-between gap-4 py-4 border-t border-b border-stone-200/60 dark:border-stone-700/60">
-            <NuxtLink 
-              v-if="prevVerse"
-              :to="`/verse/${prevVerse}`"
-              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
-            >
-              <UIcon name="i-heroicons-chevron-left" class="w-4 h-4 text-stone-400 group-hover:text-amber-500 transition-colors" />
-              <span class="font-mono text-sm text-[#18181B] dark:text-stone-100">@{{ prevVerse }}</span>
-            </NuxtLink>
-            <div v-else></div>
-            
-            <NuxtLink 
-              v-if="nextVerse"
-              :to="`/verse/${nextVerse}`"
-              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
-            >
-              <span class="font-mono text-sm text-[#18181B] dark:text-stone-100">@{{ nextVerse }}</span>
-              <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-stone-400 group-hover:text-amber-500 transition-colors" />
-            </NuxtLink>
+          <!-- Navigation with centered CTA -->
+          <div class="py-4 border-t border-b border-stone-200/60 dark:border-stone-700/60">
+            <div class="flex items-center justify-center gap-4">
+              <NuxtLink 
+                v-if="prevVerse"
+                :to="`/verse/${prevVerse}`"
+                class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
+              >
+                <UIcon name="i-heroicons-chevron-left" class="w-4 h-4 text-stone-400 group-hover:text-amber-500 transition-colors" />
+                <span class="font-mono text-sm text-[#18181B] dark:text-stone-100">@{{ prevVerse }}</span>
+              </NuxtLink>
+              <NuxtLink 
+                v-if="nextVerse"
+                :to="`/verse/${nextVerse}`"
+                class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
+              >
+                <span class="font-mono text-sm text-[#18181B] dark:text-stone-100">@{{ nextVerse }}</span>
+                <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-stone-400 group-hover:text-amber-500 transition-colors" />
+              </NuxtLink>
+            </div>
           </div>
 
           <!-- Related Verses (by topic first, then same surah) -->
@@ -182,9 +177,10 @@
                   <div class="flex items-start gap-3">
                     <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/50 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
                     <div class="flex-1 min-w-0">
-                      <span class="text-sm font-medium text-amber-700 dark:text-amber-400">
-                        {{ v.topic }}
-                      </span>
+                      <p class="text-xs text-amber-500 dark:text-amber-400 mb-1">{{ v.topic }}</p>
+                      <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
+                        {{ v.text?.slice(0, 80) || v.translation?.slice(0, 80) || 'Tap to view' }}
+                      </p>
                     </div>
                   </div>
                 </NuxtLink>
@@ -199,7 +195,7 @@
                   <div class="flex items-start gap-3">
                     <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
                     <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
-                      {{ v.translation }}
+                      {{ v.translation?.slice(0, 80) || v.text?.slice(0, 80) || 'Tap to view' }}
                     </p>
                   </div>
                 </NuxtLink>
@@ -313,7 +309,7 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex flex-wrap items-center gap-4 pt-4">
+          <div class="flex flex-wrap justify-center items-center gap-4 pt-4">
             <NuxtLink 
               v-if="user" 
               :to="`/notes/new?verse=${encodeURIComponent(id)}`"
@@ -330,14 +326,6 @@
               <UIcon name="i-heroicons-arrow-right-end-on-rectangle" class="w-4 h-4" />
               Sign in to add notes
             </NuxtLink>
-
-            <button 
-              @click="shareVerse"
-              class="inline-flex items-center gap-2 px-4 py-2 text-[#52525B] dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all duration-300"
-            >
-              <UIcon name="i-heroicons-share" class="w-4 h-4" />
-              Share
-            </button>
           </div>
         </div>
       </template>
@@ -372,11 +360,18 @@ const verseData = ref<{
   total_verses?: number
   revelation_place?: string
   translations?: { text: string }[]
+  surah?: {
+    id: number
+    name_simple: string
+    name_complex: string
+    name_arabic: string
+  }
+  tafsirs?: { text: string; resourceName: string }[]
 } | null>(null)
 const translation = ref('')
 const loading = ref(true)
 const error = ref('')
-const relatedVerses = ref<Array<{ verse_key: string; translation: string }>>([])
+const relatedVerses = ref<Array<{ verse_key: string; text: string; translation: string }>>([])
 const reflections = ref<Array<{
   noteId: string
   noteTitle: string | null
@@ -392,8 +387,18 @@ const tafsir = ref<{
   text: string
   resourceName: string
 } | null>(null)
-const loadingTafsir = ref(false)
 const tafsirExpanded = ref(false)
+
+const tafsirSources = ref<string[]>([])
+const selectedTafsir = ref('')
+const selectedTafsirContent = ref('')
+
+watch(selectedTafsir, (source) => {
+  const t = verseData.value?.tafsirs?.find((t: any) => t.resourceName === source)
+  if (t) {
+    selectedTafsirContent.value = t.text
+  }
+})
 
 const audio = ref<{
   url: string
@@ -418,9 +423,12 @@ const nextVerse = computed(() => {
 
 const chapterInfo = computed(() => {
   if (!chapter) return null
+  const surah = verseData.value?.surah
   return {
     id: chapter,
-    name: verseData.value?.chapter_name || `Surah ${chapter}`,
+    name: surah?.name_simple || surah?.name_complex || verseData.value?.chapter_name || `Chapter ${chapter}`,
+    name_simple: surah?.name_simple || surah?.name_complex || verseData.value?.chapter_name || '',
+    name_arabic: surah?.name_arabic || verseData.value?.chapter_name_arabic || '',
     meaning: surahMeanings[chapter] || '',
     revelation: verseData.value?.revelation_place || ''
   }
@@ -432,12 +440,14 @@ const verseTopics = computed(() => {
 
 const relatedByTopic = computed(() => {
   if (verseTopics.value.length === 0) return []
-  const allRelatedVerses: Array<{ verse_key: string; translation: string; topic: string }> = []
+  const allRelatedVerses: Array<{ verse_key: string; text: string; translation: string; topic: string }> = []
   for (const topic of verseTopics.value) {
     for (const verseKey of topic.verses) {
       if (verseKey !== id) {
         allRelatedVerses.push({
           verse_key: verseKey,
+          text: '',
+          translation: '',
           topic: topic.name
         })
       }
@@ -495,16 +505,17 @@ async function loadReflections() {
 async function loadRelatedVerses() {
   if (!chapter) return
   try {
-    const response = await $fetch<{ verses?: Array<{ verse_key: string; translations: Array<{ text: string }> }> }>('/api/quran/chapter-verses', {
+    const response = await $fetch<{ verses?: Array<{ verse_key: string; text_uthmani: string; translations: Array<{ text: string }> }> }>('/api/quran/chapter-verses', {
       query: { chapter, limit: 5, offset: 0, exclude: id }
     })
     
     if (response.verses) {
       relatedVerses.value = response.verses
-        .filter(v => v.translations?.[0]?.text)
+        .filter(v => v.text_uthmani || v.translations?.[0]?.text)
         .map(v => ({
           verse_key: v.verse_key,
-          translation: v.translations[0].text
+          text: v.text_uthmani,
+          translation: v.translations?.[0]?.text
         }))
         .slice(0, 4)
     }
@@ -524,10 +535,11 @@ onMounted(async () => {
         translation.value = result.translations[0].text
       }
       // Use tafsir and audio from combined verse API response
-      if (result.tafsir?.text) {
-        tafsir.value = {
-          text: result.tafsir.text,
-          resourceName: result.tafsir.resourceName || 'Tafsir'
+      if (result.tafsirs?.length > 0) {
+        tafsirSources.value = result.tafsirs.map((t: any) => t.resourceName)
+        if (result.tafsirs.length > 0) {
+          selectedTafsir.value = result.tafsirs[0].resourceName
+          selectedTafsirContent.value = result.tafsirs[0].text
         }
       }
       if (result.audio?.url) {

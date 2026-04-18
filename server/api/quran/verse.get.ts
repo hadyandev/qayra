@@ -1,6 +1,15 @@
 import { getQuery } from 'h3'
 import { qfFetchJson } from '../../utils/qfHttp'
 
+const surahInfo: Record<number, { name_simple: string; name_complex: string; name_arabic: string; verses_count: number; revelation_place: string }> = {
+  1: { name_simple: 'Al-Fatihah', name_complex: 'Al-Fātihah', name_arabic: 'ٱلْفَاتِحَة', verses_count: 7, revelation_place: 'Mecca' },
+  2: { name_simple: 'Al-Baqarah', name_complex: 'Al-Baqarah', name_arabic: 'ٱلْبَقَرَة', verses_count: 286, revelation_place: 'Medina' }
+}
+
+function getSurahInfo(chapterId: number) {
+  return surahInfo[chapterId] || null
+}
+
 export default defineEventHandler(async (event) => {
   const key = getQuery(event).key as string
   const config = useRuntimeConfig()
@@ -8,6 +17,10 @@ export default defineEventHandler(async (event) => {
   if (!key) {
     return { error: 'Verse key is required', verse: null }
   }
+
+  const keyParts = key.split(':')
+  const chapterNum = parseInt(keyParts[0], 10) || 1
+  const verseNum = keyParts[1] ? parseInt(keyParts[1], 10) : 1
 
   try {
     const translationIds = (config.qfTranslationIds as string) || '85'
@@ -30,6 +43,17 @@ export default defineEventHandler(async (event) => {
       return { error: 'Verse not found', verse: null }
     }
 
+    // Get chapter info from static map
+    const surah = getSurahInfo(chapterNum)
+    const chapterNameSimple = surah?.name_simple || 'Chapter ' + chapterNum
+    const chapterNameComplex = surah?.name_complex || chapterNameSimple
+    const chapterNameArabic = surah?.name_arabic || ''
+    const chapterVersesCount = surah?.verses_count || 0
+    const revelationPlace = surah?.revelation_place || ''
+
+    // Verse data from API
+    const verseNumber = verse.verse_number ? Number(verse.verse_number) : verseNum
+
     // Translations
     const translationsRaw = (verse.translations as Record<string, unknown>[]) || []
     const translations = translationsRaw.map((t) => ({
@@ -37,29 +61,23 @@ export default defineEventHandler(async (event) => {
       resource_name: String(t.resource_name ?? t.resourceName ?? '')
     }))
 
-    // Tafsir
+    // Tafsir - collect all available
     const tafsirsRaw = (verse.tafsirs as Record<string, unknown>[]) || []
-    let tafsirText = null
-    let tafsirName = null
-    for (const t of tafsirsRaw) {
-      if (t.text) {
-        tafsirText = String(t.text)
-        tafsirName = String(t.resource_name ?? t.resourceName ?? 'Tafsir')
-        break
-      }
-    }
+    const tafsirs = tafsirsRaw
+      .filter(t => t.text)
+      .map(t => ({
+        text: String(t.text),
+        resourceName: String(t.resource_name ?? t.resourceName ?? 'Tafsir')
+      }))
 
     // Audio
     const audioRaw = verse.audio as Record<string, unknown> | undefined
-    let audioUrl = null
-    let reciterName = null
+    let audioUrl: string | null = null
+    let reciterName: string | null = null
     if (audioRaw?.url) {
       audioUrl = String(audioRaw.url)
       reciterName = String(audioRaw.reciter_name ?? audioRaw.reciterName ?? '')
     }
-
-    const chapterRaw = verse.chapter as Record<string, unknown> | undefined
-    const verseNumber = Number(verse.verse_number ?? 0)
 
     return {
       verse: {
@@ -69,22 +87,21 @@ export default defineEventHandler(async (event) => {
         text_uthmani: String(verse.text_uthmani ?? ''),
         text_imlaei_simple: String(verse.text_imlaei_simple ?? ''),
         translations,
-        tafsir: tafsirText ? { text: tafsirText, resourceName: tafsirName } : null,
+        tafsirs,
+        tafsir: tafsirs.length > 0 ? tafsirs[0] : null,
         audio: audioUrl ? { url: audioUrl, reciter: reciterName } : null,
-        chapter_id: chapterRaw ? Number(chapterRaw.id) : undefined,
-        chapter_name: chapterRaw ? String(chapterRaw.name_simple ?? '') : '',
-        chapter_name_arabic: chapterRaw ? String(chapterRaw.name_arabic ?? '') : '',
+        chapter_id: chapterNum,
+        chapter_name: chapterNameSimple,
+        chapter_name_arabic: chapterNameArabic,
         verse_number: verseNumber,
-        total_verses: chapterRaw ? Number(chapterRaw.verses_count ?? 0) : 0,
-        revelation_place: chapterRaw ? String(chapterRaw.revelation_place ?? '') : '',
-        surah: chapterRaw
-          ? {
-              id: Number(chapterRaw.id),
-              name_complex: String(chapterRaw.name_complex ?? ''),
-              name_simple: String(chapterRaw.name_simple ?? ''),
-              name_arabic: String(chapterRaw.name_arabic ?? '')
-            }
-          : null
+        total_verses: chapterVersesCount,
+        revelation_place: revelationPlace,
+        surah: surah ? {
+          id: chapterNum,
+          name_complex: surah.name_complex,
+          name_simple: surah.name_simple,
+          name_arabic: surah.name_arabic
+        } : null
       },
       error: null
     }

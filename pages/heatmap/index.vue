@@ -92,31 +92,10 @@
             </div>
           </div>
           
-          <div class="overflow-x-auto">
-            <div class="flex gap-1 min-w-[800px]">
-              <div class="flex flex-col gap-0.5 pt-6">
-                <div v-for="(day, idx) in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="h-3 text-[9px] text-stone-400 leading-3">
-                  <span v-if="idx % 2 === 1">{{ day }}</span>
-                </div>
-              </div>
-              
-              <div class="flex gap-0.5">
-                <div v-if="activityData.monthLabels?.length" class="flex gap-0.5 mb-1">
-                  <span 
-                    v-for="(label, idx) in activityData.monthLabels" 
-                    :key="idx"
-                    class="text-[9px] text-stone-400 whitespace-nowrap"
-                    :style="{ marginLeft: idx === 0 ? '0' : '4px' }"
-                  >
-                    {{ label.month }}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="flex gap-0.5">
-              <div class="flex flex-col gap-0.5 pr-1">
-                <div v-for="(day, idx) in ['S', 'M', 'T', 'W', 'T', 'F', 'S']" :key="idx" class="h-3 text-[9px] text-stone-400 leading-3 flex items-center">
+          <div class="overflow-x-auto pb-2">
+            <div class="flex gap-0.5 min-w-[600px]">
+              <div class="flex flex-col gap-0.5 pr-2">
+                <div v-for="(day, idx) in ['S', 'M', 'T', 'W', 'T', 'F', 'S']" :key="idx" class="h-3 text-[10px] text-stone-400 leading-3 flex items-center justify-end w-4">
                   <span v-if="idx % 2 === 1">{{ day }}</span>
                 </div>
               </div>
