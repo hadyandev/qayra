@@ -61,6 +61,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  if (publishedVerses.length > 0) {
+    const { error: updateError } = await supabase
+      .from('note_verses')
+      .update({ qf_published_at: new Date().toISOString() })
+      .eq('note_id', note_id)
+      .in('verse_key', publishedVerses)
+    
+    if (updateError) {
+      console.error('Failed to update local publish timestamps:', updateError)
+    }
+  }
+
   return {
     success: true,
     published_verses: publishedVerses,

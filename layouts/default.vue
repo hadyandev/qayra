@@ -127,11 +127,13 @@ const navLinks = computed(() => {
       { to: '/dashboard', label: 'Dashboard' },
       { to: '/notes', label: 'Notes' },
       { to: '/browse', label: 'Browse' },
+      { to: '/hadith', label: 'Hadith' },
       { to: '/heatmap', label: 'My Stats' },
     ]
   }
   return [
     { to: '/browse', label: 'Browse' },
+    { to: '/hadith', label: 'Hadith' },
     { to: '/stats', label: 'Stats' },
   ]
 })

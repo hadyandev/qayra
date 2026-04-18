@@ -473,6 +473,11 @@ function formatDate(dateStr: string): string {
 }
 
 async function loadReflections() {
+  if (!user.value) {
+    reflections.value = []
+    loadingReflections.value = false
+    return
+  }
   loadingReflections.value = true
   try {
     const timestamp = Date.now()

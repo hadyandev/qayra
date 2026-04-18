@@ -48,20 +48,20 @@ export default defineEventHandler(async (event) => {
     return { reflections: [], error: 'Verse key is required' }
   }
 
-  const { data: noteIds, error: linkError } = await client
+  const { data: noteVerses, error: linkError } = await client
     .from('note_verses')
-    .select('note_id')
+    .select('note_id, qf_published_at')
     .eq('verse_key', verseKey)
 
   if (linkError) {
     throw createError({ statusCode: 500, statusMessage: linkError.message })
   }
 
-  if (!noteIds || noteIds.length === 0) {
+  if (!noteVerses || noteVerses.length === 0) {
     return { reflections: [], error: null, verseKey }
   }
 
-  const noteIdList = noteIds.map(n => n.note_id)
+  const noteIdList = noteVerses.map(n => n.note_id)
 
   const { data: notes, error: notesError } = await client
     .from('notes')
@@ -81,6 +81,7 @@ export default defineEventHandler(async (event) => {
     speaker: string | null
     tags: string[]
     created_at: string
+    qf_published_at: string | null
   }> = []
 
   for (const note of notes ?? []) {
@@ -95,7 +96,8 @@ export default defineEventHandler(async (event) => {
           source: note.source,
           speaker: note.speaker,
           tags: note.tags || [],
-          created_at: note.created_at
+          created_at: note.created_at,
+          qf_published_at: noteVerses?.find(n => n.note_id === note.id)?.qf_published_at || null
         })
       }
     }

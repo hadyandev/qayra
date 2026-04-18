@@ -184,9 +184,10 @@ const error = ref('')
 const searchQuery = ref('')
 const activeFilter = ref('all')
 
-const allFilters = quranTopics.map(t => ({
+const topicFilters = quranTopics.map(t => ({
   id: `topic:${t.slug}`,
-  label: t.name
+  label: t.name,
+  icon: t.icon
 }))
 
 const mainFilters = computed(() => [
