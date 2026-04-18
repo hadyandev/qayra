@@ -301,12 +301,12 @@ onMounted(async () => {
     if (slug.value.length === 0) {
       const data = await $fetch('/api/hadith/books')
       
-      editions.value = Object.entries(collectionNames).map(slug => ({
-        slug,
-        name: collectionNames[slug],
-        grade: collectionGrades[slug],
-        books: collectionBookCounts[slug],
-        hadiths: collectionHadithCounts[slug]
+      editions.value = Object.keys(collectionNames).map(key => ({
+        slug: key,
+        name: collectionNames[key],
+        grade: collectionGrades[key],
+        books: collectionBookCounts[key],
+        hadiths: collectionHadithCounts[key]
       }))
     }
     else if (slug.value.length === 1) {
