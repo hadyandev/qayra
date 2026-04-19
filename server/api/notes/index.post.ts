@@ -2,6 +2,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import { readBody } from 'h3'
 import { createError } from 'h3'
 import { extractVerseKeysFromContent } from '../../utils/extractVerseKeys'
+import { logQFActivity } from '../../utils/qfActivity'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -46,6 +47,15 @@ export default defineEventHandler(async (event) => {
       console.error('note_verses insert:', vErr)
     }
   }
+
+  // Log activity to Quran Foundation (note-taking = LESSON activity)
+  // Estimate time: 60 seconds per note as baseline
+  const seconds = Math.max(60, content.length / 10) // ~10 chars per second + 60s baseline
+  logQFActivity({
+    type: 'LESSON',
+    seconds: Math.round(seconds),
+    ranges: keys.length > 0 ? [keys[0] + '-' + keys[keys.length - 1]] : undefined
+  }).catch(err => console.error('[QF Activity] Note logging failed:', err))
 
   return { note }
 })

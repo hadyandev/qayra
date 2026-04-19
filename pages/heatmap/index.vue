@@ -11,7 +11,7 @@
               Statistics
             </h1>
             <p class="text-[#52525B] dark:text-stone-400">
-              {{ user ? 'Your note journey across the Quran' : 'Quran engagement statistics' }}
+              {{ user ? 'Your journey across the Quran' : 'Quran engagement statistics' }}
             </p>
             
             <div v-if="!user" class="mt-4 text-xs text-amber-600 dark:text-amber-500">
@@ -76,7 +76,7 @@
             <div>
               <h2 class="text-lg font-semibold text-[#18181B] dark:text-stone-100">Activity Calendar</h2>
               <p class="text-sm text-stone-400 mt-1">
-                Your note creation over the last year
+                Reading and note activity over the last year
               </p>
             </div>
             <div class="flex items-center gap-1.5 text-xs text-stone-400">
@@ -111,11 +111,47 @@
                     :key="dayIdx"
                     class="w-3 h-3 rounded-sm cursor-pointer transition-all duration-150 hover:ring-2 hover:ring-amber-400/50 hover:scale-125"
                     :class="getContributionColor(day.level)"
-                    :title="`${formatDate(day.date)}: ${day.count} note${day.count !== 1 ? 's' : ''}`"
+                    :title="`${formatDate(day.date)}: ${day.count} activit${day.count === 1 ? 'y' : 'ies'}`"
                     @click="showDayActivity(day)"
                   ></div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity List (GitHub-style) -->
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6 mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#18181B] dark:text-stone-100">Recent Activity</h2>
+            <div v-if="isPrelive" class="flex items-center gap-2">
+              <span class="text-xs text-stone-400">QF:</span>
+              <span class="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded">
+                {{ localActivities.length ? 'logged' : 'pending oauth' }}
+              </span>
+            </div>
+          </div>
+          <div v-if="!localActivities.length" class="text-center py-4 text-stone-400">
+            <p class="mb-2">No activity yet. Start reading verses or writing notes!</p>
+            <p v-if="isPrelive" class="text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-lg inline-block">
+              QF activity logs here after OAuth is configured
+            </p>
+          </div>
+          <div v-else class="space-y-3 max-h-64 overflow-y-auto">
+            <div 
+              v-for="activity in localActivities.slice(0, 20)" 
+              :key="activity.date"
+              class="flex items-center justify-between py-2 border-b border-stone-100 dark:border-stone-800 last:border-0"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span class="text-sm text-[#18181B] dark:text-stone-100">
+                  {{ new Date(activity.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                </span>
+              </div>
+              <span class="text-sm text-stone-500">
+                {{ activity.count }} note{{ activity.count !== 1 ? 's' : '' }}
+              </span>
             </div>
           </div>
         </div>
@@ -213,10 +249,10 @@
               {{ selectedDay.count }}
             </p>
             <p class="text-stone-500 dark:text-stone-400 mb-1">
-              {{ selectedDay.count === 1 ? 'note' : 'notes' }} on {{ formatDateFull(selectedDay.date) }}
+              {{ selectedDay.count === 1 ? 'activity' : 'activities' }} on {{ formatDateFull(selectedDay.date) }}
             </p>
             <p v-if="selectedDay.count === 0" class="text-sm text-stone-400 mt-3">
-              No notes were created on this day.
+              No activity on this day.
             </p>
           </div>
         </div>
@@ -228,7 +264,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+const config = useRuntimeConfig()
 const user = useSupabaseUser()
+const isPrelive = computed(() => config.public.qfEnv === 'prelive')
 
 onMounted(() => {
   if (!user.value) {
@@ -319,14 +357,76 @@ function openVersePanel(verseKey: string) {
   selectedVerse.value = verseKey
 }
 
+const localActivities = ref<Array<{ date: string; count: number }>>([])
+
 onMounted(async () => {
   try {
+    // Fetch local activity (notes from Supabase)
+    // Note: QF GET doesn't work with client_credentials - using local
     const [heatmapRes, activityRes] = await Promise.all([
       $fetch<{ chapters: HeatmapChapter[] }>('/api/heatmap'),
       $fetch('/api/activity')
     ])
     chapters.value = heatmapRes.chapters || []
     activityData.value = activityRes
+    
+    // Use local activity (notes) for heatmap display
+    if (activityData.value?.weeks) {
+      const activityByDate: Record<string, number> = {}
+      activityData.value.weeks?.forEach((week: ActivityDay[]) => {
+        week.forEach(day => {
+          if (day.count > 0) {
+            activityByDate[day.date] = day.count
+          }
+        })
+      })
+      
+      const today = new Date()
+      const todayStr = today.toISOString().split('T')[0]
+      const weeks: ActivityDay[][] = []
+      const startDate = new Date(today)
+      startDate.setDate(startDate.getDate() - 364)
+      const dayOfWeek = startDate.getDay()
+      startDate.setDate(startDate.getDate() - dayOfWeek)
+      
+      let currentWeek: ActivityDay[] = []
+      const currentDate = new Date(startDate)
+      
+      while (currentDate <= today) {
+        const dateStr = currentDate.toISOString().split('T')[0]
+        const count = activityByDate[dateStr] || 0
+        let level = 0
+        if (count >= 1) level = 1
+        if (count >= 2) level = 2
+        if (count >= 3) level = 3
+        if (count >= 4) level = 4
+        
+        currentWeek.push({ date: dateStr, count, level })
+        
+        if (currentWeek.length === 7) {
+          weeks.push(currentWeek)
+          currentWeek = []
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+      
+      if (currentWeek.length > 0) {
+        weeks.push(currentWeek)
+      }
+      
+      activityData.value = {
+        weeks,
+        monthLabels: [],
+        totalContributions: Object.values(activityByDate).reduce((sum, c) => sum + c, 0),
+        totalDays: Object.keys(activityByDate).length
+      }
+      
+      localActivities.value = Object.entries(activityByDate).map(([date, count]) => ({
+        date,
+        count
+      })).sort((a, b) => b.date.localeCompare(a.date))
+    }
   } catch (e) {
     console.error('Failed to load statistics:', e)
   } finally {

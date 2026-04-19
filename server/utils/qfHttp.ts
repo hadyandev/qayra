@@ -1,13 +1,8 @@
 import { useRuntimeConfig } from '#imports'
 
-type QfScope = 'content' | 'search' | 'user'
+type QfScope = 'content' | 'search' | 'user' | 'streak' | 'bookmark' | 'goal' | 'reading_session' | 'activity_day'
 
 const tokenCache: Partial<Record<QfScope, { token: string; expiresAt: number }>> = {}
-
-const userApiBaseMap: Record<string, string> = {
-  prelive: 'https://api-prelive.quran.foundation',
-  live: 'https://api.quran.foundation'
-}
 
 interface TokenResponse {
   access_token?: string
@@ -29,25 +24,28 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
   const now = Date.now()
   const cached = tokenCache[scope]
   if (cached && cached.expiresAt > now + 5 * 60 * 1000) {
-    console.log('[QF OAuth] Using cached token for scope:', scope)
     return cached.token
   }
 
   const tokenUrl = config.qfOAuthTokenUrl as string
-  console.log('[QF OAuth] Requesting token from:', tokenUrl)
-  console.log('[QF OAuth] Scope:', scope)
-  console.log('[QF OAuth] Client ID:', id.substring(0, 8) + '...')
 
   try {
-    // Map scope to valid OAuth scopes
     let oauthScope = 'content'
     if (scope === 'user') {
-      oauthScope = 'note' // Use 'note' scope for user API access
+      oauthScope = 'note'
     } else if (scope === 'search') {
       oauthScope = 'search'
+    } else if (scope === 'streak') {
+      oauthScope = 'streak'
+    } else if (scope === 'bookmark') {
+      oauthScope = 'bookmark'
+    } else if (scope === 'goal') {
+      oauthScope = 'goal'
+    } else if (scope === 'reading_session') {
+      oauthScope = 'reading_session'
+    } else if (scope === 'activity_day') {
+      oauthScope = 'activity_day'
     }
-
-    console.log('[QF OAuth] OAuth scope:', oauthScope)
 
     const response = await $fetch<TokenResponse>(tokenUrl, {
       method: 'POST',
@@ -57,8 +55,6 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
       },
       body: `grant_type=client_credentials&scope=${oauthScope}`
     })
-
-    console.log('[QF OAuth] Response:', JSON.stringify(response))
 
     if (response.error) {
       console.error('[QF OAuth] Error:', response.error, response.error_description)
@@ -77,9 +73,6 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
     return response.access_token
   } catch (e: any) {
     console.error('[QF OAuth] Exception:', e?.message || e)
-    if (e?.data) {
-      console.error('[QF OAuth] Error Details:', JSON.stringify(e.data))
-    }
     return null
   }
 }
@@ -100,7 +93,7 @@ export async function qfFetchJson<T>(
   }
 
   let base: string
-  if (scope === 'user') {
+  if (scope === 'user' || scope === 'streak' || scope === 'bookmark' || scope === 'goal' || scope === 'reading_session' || scope === 'activity_day') {
     base = userBase
   } else {
     base = contentBase

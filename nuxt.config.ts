@@ -3,12 +3,12 @@ const qfEnv = process.env.QF_ENV || 'prelive'
 const qfConfigMap = {
   prelive: {
     apiBase: 'https://apis-prelive.quran.foundation',
-    userApiBase: 'https://api-prelive.quran.foundation',
+    userApiBase: 'https://apis-prelive.quran.foundation',
     oauthTokenUrl: 'https://prelive-oauth2.quran.foundation/oauth2/token'
   },
   live: {
     apiBase: 'https://apis.quran.foundation',
-    userApiBase: 'https://api.quran.foundation', // Not available on prod yet
+    userApiBase: 'https://apis.quran.foundation',
     oauthTokenUrl: 'https://oauth2.quran.foundation/oauth2/token'
   }
 }
@@ -48,7 +48,8 @@ export default defineNuxtConfig({
     qfOAuthTokenUrl: process.env.QF_OAUTH_TOKEN_URL || qfConfig.oauthTokenUrl,
     qfTranslationIds: process.env.QF_TRANSLATION_IDS || '85',
     public: {
-      qfBase: process.env.NUXT_PUBLIC_QF_BASE || 'https://api.quran.foundation'
+      qfBase: process.env.NUXT_PUBLIC_QF_BASE || qfConfig.apiBase,
+      qfEnv: process.env.QF_ENV || 'prelive'
     }
   }
 })

@@ -14,8 +14,17 @@
 - **Publish API:** `POST /api/publish` for QF snippet publishing.
 - **TypeScript types:** `types/database.types.ts` for Supabase.
 - **README / `.env.example`** document setup.
+- **Prelive flag** - displays PRELIVE badge in top-left corner when `QF_ENV=prelive`
+- **Random verse restriction** - only chapters 1-2 in prelive mode
 
 ## Recent Updates (2026-04-19)
+
+### QF Activity Integration
+- Note creation logs LESSON activity to QF (`/auth/v1/activity-days` POST)
+- Verse viewing logs QURAN activity after 10 seconds
+- Heatmap uses local activity data (notes from Supabase)
+- Activity list shows recent notes with date + count
+- Info message on heatmap: "QF activity logs here after OAuth is configured"
 
 ### Verse Detail Page
 - Chapter name displays correctly (Al-Fatihah instead of "Chapter 1")
@@ -43,10 +52,18 @@
 - Translations (via verses endpoint)
 - Search API (basic)
 
-### User APIs (Planned - Not Implemented Yet)
-- Bookmarks/favorites
-- Sync reading progress
-- User-specific highlights
+### User APIs (PRELIVE - client_credentials)
+- POST to `/auth/v1/activity-days` works ✅
+- GET from `/auth/v1/activity-days` returns empty (requires user OAuth)
+- OAuth Authorization Code flow requires registered redirect_uri
+
+### Limitation
+Using **client_credentials** OAuth - this allows POSTing activity but GET requires user authentication. To fully sync activity:
+1. Contact QF to register a redirect_uri
+2. Implement Authorization Code + PKCE flow
+3. User logs in → use their access_token for GET
+
+For now, heatmap uses local Supabase activity.
 
 ## Note on @quranjs/api
 

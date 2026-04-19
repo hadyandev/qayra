@@ -178,7 +178,10 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+const config = useRuntimeConfig()
 const user = useSupabaseUser()
+const isPrelive = computed(() => config.public.qfEnv === 'prelive')
+
 if (!user.value) {
   navigateTo('/login')
 }
@@ -253,11 +256,20 @@ async function loadDashboard() {
     const totalReflectedVerses = chapters.value.reduce((sum, ch) => sum + ch.reflection_count, 0)
     const chaptersWithReflections = chapters.value.filter(ch => ch.reflection_count > 0).length
     
+    // Try to get QF streak data (from user's Quran.com reading)
+    let qfStreakDays = 0
+    try {
+      const qfStreak = await $fetch<{ currentStreakDays: number }>('/api/qf/streaks')
+      qfStreakDays = qfStreak.currentStreakDays || 0
+    } catch (e) {
+      console.log('QF streak not available:', e)
+    }
+    
     stats.value = {
       totalNotes: activityData.value.totalContributions || 0,
       totalVerses: totalReflectedVerses,
       totalChapters: chaptersWithReflections,
-      streakDays: 0,
+      streakDays: qfStreakDays,
       activeDays: activityData.value.totalDays || 0
     }
   } catch (e) {
@@ -269,7 +281,9 @@ async function loadDashboard() {
 
 async function loadFeaturedVerse() {
   try {
-    const randomChapter = Math.floor(Math.random() * 114) + 1
+    // In prelive, only use chapters 1-2 to avoid production data
+    const maxChapter = isPrelive.value ? 2 : 114
+    const randomChapter = Math.floor(Math.random() * maxChapter) + 1
     const { verses } = await $fetch<{ verses: Array<{ verse_key: string; translations?: Array<{ text: string }> }> }>(
       `/api/quran/chapter-verses?chapter=${randomChapter}&limit=1`
     )

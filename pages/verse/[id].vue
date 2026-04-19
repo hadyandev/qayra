@@ -510,7 +510,29 @@ async function loadRelatedVerses() {
 
 
 
+// Track verse viewing for QF activity - log after 10 seconds if still on page
+let verseActivityLogged = false
+
 onMounted(async () => {
+  // After 10 seconds, log the reading activity if still on this verse
+  setTimeout(() => {
+    if (verseData.value?.verse_key && !verseActivityLogged) {
+      verseActivityLogged = true
+      const verseKey = verseData.value.verse_key
+      // Convert single verse "2:2" to range "2:2-2:2"
+      const range = verseKey + '-' + verseKey
+      $fetch('/api/qf/activity-days', {
+        method: 'POST',
+        body: {
+          type: 'QURAN',
+          seconds: 10,
+          ranges: [range],
+          date: new Date().toISOString().split('T')[0]
+        }
+      }).catch(err => console.log('[QF Activity] Verse viewing:', err))
+    }
+  }, 10000) // 10 seconds
+  
   try {
     const result = await verse(id)
     if (result) {

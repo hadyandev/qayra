@@ -1,11 +1,19 @@
 <template>
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+  <div>
+    <div v-if="isPrelive" class="fixed top-0 left-0 z-50 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-br">
+      PRELIVE
+    </div>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
+const config = useRuntimeConfig()
 const route = useRoute()
+
+const isPrelive = computed(() => config.public.qfEnv === 'prelive')
 
 const pageTitle = computed(() => {
   const path = route.path

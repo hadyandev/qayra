@@ -43,13 +43,21 @@ Notes become scattered and disconnected from source material. There's no way to 
 | Translations | `/content/api/v4/verses/by_key/:key?translations=85` | Get translations |
 | Search | `/content/api/v4/search/verses` | Search verses |
 
-### User APIs (Future Development)
+### User APIs (PRELIVE - client_credentials OAuth)
 
-The codebase has OAuth scope support for user APIs but they haven't been implemented yet. Planned features:
+| API | Endpoint | Description |
+|-----|---------|-----------|
+| POST Activity | `/auth/v1/activity-days` | Log LESSON (note) or QURAN (reading) |
+| GET Activity | `/auth/v1/activity-days` | Fetch user activity (requires user OAuth) |
 
-- Save user bookmarks/favorites
-- Sync reading progress
-- User-specific highlights
+**Note:** Using `client_credentials` OAuth allows POSTing activity but GET requires Authorization Code flow (needs redirect_uri registration). Activity logging works; heatmap uses local Supabase data for display.
+
+### Environment
+
+Set `QF_ENV=prelive` in `.env` for testing:
+
+- Random verse on homepage restricts to chapters 1-2
+- PRELIVE badge displays in top-left corner
 
 ## Setup
 
@@ -82,6 +90,7 @@ SUPABASE_KEY=your-anon-key
 # Quran Foundation (get from developer portal)
 QF_CLIENT_ID=your-client-id
 QF_CLIENT_SECRET=your-client-secret
+QF_ENV=prelive  # or 'live' for production
 ```
 
 ### 3. Set up Supabase
