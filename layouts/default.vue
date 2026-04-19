@@ -41,13 +41,13 @@
               />
             </button>
             
-            <button
+            <NuxtLink
               v-if="!user" 
               to="/login"
               class="px-4 py-2 text-sm font-medium text-white bg-[#18181B] dark:bg-amber-600 rounded-full hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 hover:scale-105 active:scale-95"
             >
               Sign in
-            </button>
+            </NuxtLink>
             
             <div v-else class="relative" ref="userMenuRef">
               <button 
