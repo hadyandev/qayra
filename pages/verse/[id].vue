@@ -167,7 +167,7 @@
               Related Verses
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <template v-if="relatedByTopic.length > 0">
+<template v-if="relatedByTopic.length > 0">
                 <NuxtLink 
                   v-for="v in relatedByTopic.slice(0, 4)"
                   :key="v.verse_key"
@@ -179,13 +179,13 @@
                     <div class="flex-1 min-w-0">
                       <p class="text-xs text-amber-500 dark:text-amber-400 mb-1">{{ v.topic }}</p>
                       <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
-                        {{ v.text?.slice(0, 80) || v.translation?.slice(0, 80) || 'Tap to view' }}
+                        {{ v.translation?.slice(0, 80) || v.text?.slice(0, 80) || 'Tap to view' }}
                       </p>
                     </div>
                   </div>
                 </NuxtLink>
               </template>
-              <template v-else>
+              <template v-else-if="relatedVerses.length > 0">
                 <NuxtLink 
                   v-for="v in relatedVerses.slice(0, 4)"
                   :key="v.verse_key"
@@ -195,7 +195,7 @@
                   <div class="flex items-start gap-3">
                     <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
                     <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
-                      {{ v.translation?.slice(0, 80) || v.text?.slice(0, 80) || 'Tap to view' }}
+                      {{ v.translation?.slice(0, 80) || v.text?.slice(0, 80) }}
                     </p>
                   </div>
                 </NuxtLink>
@@ -306,26 +306,6 @@
                 </div>
               </template>
             </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex flex-wrap justify-center items-center gap-4 pt-4">
-            <NuxtLink 
-              v-if="user" 
-              :to="`/notes/new?verse=${encodeURIComponent(id)}`"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-full font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
-            >
-              <UIcon name="i-heroicons-plus" class="w-4 h-4" />
-              New note citing this verse
-            </NuxtLink>
-            <NuxtLink 
-              v-else 
-              to="/login"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100 rounded-full font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-all duration-300"
-            >
-              <UIcon name="i-heroicons-arrow-right-end-on-rectangle" class="w-4 h-4" />
-              Sign in to add notes
-            </NuxtLink>
           </div>
         </div>
       </template>
@@ -438,13 +418,14 @@ const verseTopics = computed(() => {
   return quranTopics.filter(t => t.verses.includes(id))
 })
 
+// Related verses by topic - just showverse keys, content loads on click
 const relatedByTopic = computed(() => {
   if (verseTopics.value.length === 0) return []
-  const allRelatedVerses: Array<{ verse_key: string; text: string; translation: string; topic: string }> = []
+  const all: Array<{ verse_key: string; text: string; translation: string; topic: string }> = []
   for (const topic of verseTopics.value) {
     for (const verseKey of topic.verses) {
       if (verseKey !== id) {
-        allRelatedVerses.push({
+        all.push({
           verse_key: verseKey,
           text: '',
           translation: '',
@@ -453,7 +434,7 @@ const relatedByTopic = computed(() => {
       }
     }
   }
-  return allRelatedVerses.slice(0, 8)
+  return all.slice(0, 8)
 })
 
 function shareVerse() {
@@ -504,21 +485,24 @@ async function loadReflections() {
 
 async function loadRelatedVerses() {
   if (!chapter) return
+  
+  // Get other verses from same chapter
+  const totalVerses = 7 // Al-Fatihah has 7 verses
+  const verseNums = Array.from({ length: totalVerses }, (_, i) => i + 1).filter(n => n !== verseNum)
+  const sampleVerses = verseNums.slice(0, 4)
+  
   try {
-    const response = await $fetch<{ verses?: Array<{ verse_key: string; text_uthmani: string; translations: Array<{ text: string }> }> }>('/api/quran/chapter-verses', {
-      query: { chapter, limit: 5, offset: 0, exclude: id }
-    })
-    
-    if (response.verses) {
-      relatedVerses.value = response.verses
-        .filter(v => v.text_uthmani || v.translations?.[0]?.text)
-        .map(v => ({
-          verse_key: v.verse_key,
-          text: v.text_uthmani,
-          translation: v.translations?.[0]?.text
-        }))
-        .slice(0, 4)
-    }
+    relatedVerses.value = await Promise.all(
+      sampleVerses.map(async (vn) => {
+        const key = `${chapter}:${vn}`
+        const v = await verse(key)
+        return v ? {
+          verse_key: key,
+          text: v.text_uthmani || v.text || '',
+          translation: v.translations?.[0]?.text || ''
+        } : null
+      })
+    ).then(results => results.filter(Boolean))
   } catch (e) {
     console.error('Failed to load related verses:', e)
   }

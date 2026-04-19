@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#FAF9F6] dark:bg-stone-950 font-sans transition-colors duration-500">
+  <div class="min-h-screen flex flex-col bg-[#FAF9F6] dark:bg-stone-950 font-sans transition-colors duration-500">
     <header class="fixed top-0 inset-x-0 z-50 px-4 pt-4">
       <nav class="max-w-5xl mx-auto bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border border-stone-200/60 dark:border-stone-800/60 rounded-[1.25rem] px-2 py-1.5 shadow-sm ring-1 ring-stone-200/30 dark:ring-stone-800/30 transition-all duration-300">
         <div class="flex items-center justify-between gap-2">
@@ -87,9 +87,23 @@
       </nav>
     </header>
     
-    <main class="pt-20">
+<main class="pt-20 pb-16 flex-1">
       <slot />
     </main>
+    
+    <!-- Footer - same as homepage -->
+    <footer class="mt-auto py-8 border-t border-stone-200 dark:border-stone-800">
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#52525B] dark:text-stone-400">
+          <p>Qayra — A Quran Learning Workspace</p>
+          <div class="flex items-center gap-6">
+            <NuxtLink to="/browse" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Browse</NuxtLink>
+            <NuxtLink to="/stats" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Stats</NuxtLink>
+            <a href="https://github.com/hadyandev/qayra" target="_blank" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">GitHub</a>
+          </div>
+        </div>
+      </div>
+    </footer>
 
     <CommandPalette ref="commandPalette" />
   </div>

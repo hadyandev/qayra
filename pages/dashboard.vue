@@ -24,43 +24,42 @@
         </div>
       </header>
 
-      <!-- Quick Stats Grid -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+      <!-- Quick Stats Grid (same as heatmap page) -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
               <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
-            <span class="text-xs text-stone-400 uppercase tracking-wide">Total Notes</span>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Notes</span>
           </div>
           <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.totalNotes || 0 }}</p>
         </div>
 
-        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
               <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <span class="text-xs text-stone-400 uppercase tracking-wide">Verses Cited</span>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Cited Verses</span>
           </div>
           <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.totalVerses || 0 }}</p>
         </div>
 
-        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <UIcon name="i-heroicons-fire" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <UIcon name="i-heroicons-calendar" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
-            <span class="text-xs text-stone-400 uppercase tracking-wide">Streak</span>
+            <span class="text-xs text-stone-400 uppercase tracking-wide">Active Days</span>
           </div>
-          <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.streakDays || 0 }}</p>
-          <p class="text-xs text-stone-400">days</p>
+          <p class="text-3xl font-bold text-[#18181B] dark:text-stone-100">{{ stats.activeDays || 0 }}</p>
         </div>
 
-        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <UIcon name="i-heroicons-bookmark" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div class="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+              <UIcon name="i-heroicons-chart-pie" class="w-5 h-5 text-stone-600 dark:text-stone-400" />
             </div>
             <span class="text-xs text-stone-400 uppercase tracking-wide">Chapters</span>
           </div>
@@ -199,8 +198,23 @@ const stats = ref({
   totalNotes: 0,
   totalVerses: 0,
   totalChapters: 0,
-  streakDays: 0
+  streakDays: 0,
+  activeDays: 0
 })
+
+const chapters = ref<Array<{
+  id: number
+  name_simple: string
+  name_arabic: string
+  verse_count: number
+  reflection_count: number
+}>>([])
+
+const activityData = ref<{
+  weeks: Array<Array<{ date: string; count: number; level: number }>>
+  totalContributions: number
+  totalDays: number
+}>({ weeks: [], totalContributions: 0, totalDays: 0 })
 
 const featuredVerse = ref<{
   verseKey: string
@@ -226,23 +240,25 @@ async function loadDashboard() {
     const { notes } = await $fetch<{ notes: typeof recentNotes.value }>('/api/notes')
     recentNotes.value = (notes || []).slice(0, 5)
     
-    // Calculate stats
-    const allVerseKeys = new Set<string>()
-    const allChapters = new Set<number>()
+    // Load heatmap and activity data (same as heatmap page)
+    const [heatmapRes, activityRes] = await Promise.all([
+      $fetch<{ chapters: typeof chapters.value }>('/api/heatmap'),
+      $fetch('/api/activity')
+    ])
     
-    notes?.forEach((note: any) => {
-      note.verse_keys?.forEach((vk: string) => {
-        allVerseKeys.add(vk)
-        const chapter = parseInt(vk.split(':')[0])
-        if (!isNaN(chapter)) allChapters.add(chapter)
-      })
-    })
+    chapters.value = heatmapRes.chapters || []
+    activityData.value = activityRes
+    
+    // Calculate stats from heatmap data
+    const totalReflectedVerses = chapters.value.reduce((sum, ch) => sum + ch.reflection_count, 0)
+    const chaptersWithReflections = chapters.value.filter(ch => ch.reflection_count > 0).length
     
     stats.value = {
-      totalNotes: notes?.length || 0,
-      totalVerses: allVerseKeys.size,
-      totalChapters: allChapters.size,
-      streakDays: 0
+      totalNotes: activityData.value.totalContributions || 0,
+      totalVerses: totalReflectedVerses,
+      totalChapters: chaptersWithReflections,
+      streakDays: 0,
+      activeDays: activityData.value.totalDays || 0
     }
   } catch (e) {
     console.error('Failed to load dashboard:', e)

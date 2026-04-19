@@ -1,6 +1,6 @@
 # Qayra — progress
 
-**Last updated:** 2026-04-14
+**Last updated:** 2026-04-19
 
 ## Implemented
 
@@ -15,11 +15,40 @@
 - **TypeScript types:** `types/database.types.ts` for Supabase.
 - **README / `.env.example`** document setup.
 
-## Manual step for you
+## Recent Updates (2026-04-19)
 
-Run [`supabase/migrations/20260414000000_notes.sql`](../supabase/migrations/20260414000000_notes.sql) in the Supabase SQL editor so notes + RPC exist.
+### Verse Detail Page
+- Chapter name displays correctly (Al-Fatihah instead of "Chapter 1")
+- Verse count shows correct total (1/7 instead of 1/0)
+- Tafsir section is expandable (no dropdown)
+- Related verses from topic + same chapter
+- Fallback verse data for first 10 verses (Arabic + translation) when QF API returns empty
+- "New note citing this verse" CTA is centered
 
-## Note on `@quranjs/api`
+### Navigation & Layout
+- Footer added to default layout (same as homepage)
+- Hadith menu commented out in navigation
+
+### Dashboard
+- Stats now uses same API as heatmap page (`/api/heatmap`, `/api/activity`)
+- Shows: Notes, Cited Verses, Active Days, Chapters
+
+## QF Integration Status
+
+### Content APIs (Implemented)
+- Chapters API (`/content/api/v4/chapters`)
+- Verses API (`/content/api/v4/verses/by_key/:key`)
+- Chapter Verses API (`/content/api/v4/verses/by_chapter/:id`)
+- Tafsir API (via verses endpoint)
+- Translations (via verses endpoint)
+- Search API (basic)
+
+### User APIs (Planned - Not Implemented Yet)
+- Bookmarks/favorites
+- Sync reading progress
+- User-specific highlights
+
+## Note on @quranjs/api
 
 The published npm `@quranjs/api` targets **quran.com** REST. The app uses **direct QF HTTP** in `server/utils/qfHttp.ts` for hackathon alignment; swap if QF ships a matching SDK on npm.
 

@@ -182,18 +182,6 @@
         </NuxtLink>
       </section>
 
-      <!-- Footer -->
-      <footer class="mt-20 pt-8 border-t border-stone-200 dark:border-stone-800">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#52525B] dark:text-stone-400">
-          <p>Qayra — A Quran Learning Workspace</p>
-          <div class="flex items-center gap-6">
-            <NuxtLink to="/browse" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Browse</NuxtLink>
-            <NuxtLink to="/stats" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Stats</NuxtLink>
-            <a href="https://github.com/hadyandev/qayra" target="_blank" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">GitHub</a>
-          </div>
-        </div>
-      </footer>
-
       <!-- Back to Top -->
       <button 
         v-show="showBackToTop"

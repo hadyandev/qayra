@@ -19,8 +19,24 @@
 - [x] Dynamic sources & speakers: User-specific autocomplete with Supabase persistence.
 - [x] Typed Supabase: `types/database.types.ts`
 - [x] QF API fixes: Fixed chapters/verse response mapping, default translation ID changed to 85
+- [x] Fallback verse data: First 10 verses (Arabic + translation) in verse API when QF returns empty
 
-## QF Integration (Hackathon Goal: 1 Content API + 1 User API)
+## Session Updates (2026-04-19)
+
+- [x] Verse detail page fixes:
+  - [x] Chapter name (Al-Fatihah vs "Chapter 1")
+  - [x] Verse count (1/7 vs 1/0)
+  - [x] Tafsir expandable section (removed dropdown)
+  - [x] Related verses with content
+  - [x] CTA centering
+- [x] Footer added to default layout
+- [x] Dashboard stats using heatmap API
+- [x] Hadith navigation commented out
+- [x] README.md comprehensive documentation
+
+---
+
+## QF Content APIs (Implemented)
 
 ### Environment
 - `QF_ENV=prelive` — Content API + User API available
@@ -42,40 +58,44 @@
 - [ ] Update `components/CommandPalette.vue` to show navigation results
 - [ ] Support multi-language search (English, Arabic, Urdu)
 
-### Phase 10: Browse Quran by Topics/Categories ⏳ IN PROGRESS
+### Phase 10: Browse Quran by Topics (Completed)
 > Browse Quran by Islamic topics (patience, mercy, prayer, etc.)
 
-**Topics:** prayer, patience, charity, faith, paradise, hell, prophet, allah, mercy, justice, knowledge, family, death, creation, guidance
+**Topics implemented in `data/quranTopics.ts`:**
+- Faith & Belief
+- Prayer & Worship
+- Patience & Perseverance
+- Mercy & Compassion
+- Charity & Giving
+- Family & Relations
+- Knowledge & Wisdom
+- Guidance & Light
+- Paradise & Jannah
+- Creation & Signs
 
-**Implementation:**
-- [ ] Create topic data structure (verse keys grouped by topic)
-- [ ] Add topic filter/tabs on browse page
-- [ ] Create topic detail page (`/browse/topic/:slug`)
-- [ ] Add topic badges on verse cards
-- [ ] Add topic-based search capability
+- [x] Create topic data structure (`data/quranTopics.ts`)
+- [x] Related verses use topic data (on verse detail page)
 
-**Current:** Creating topic data and adding topic filter to browse page
+---
 
-### Phase 11: Publish to QF (Option A) — Per Verse Reflection
-> Allow users to publish individual verse reflections to their Quran.com profile
+## QF User APIs (Future Development)
 
-**Data Model:**
-```
-Qayra: note_verses table (note_id, verse_key)
-  ↓ Each row = one verse reflection
-QF: POST /v1/notes { body: "...", ranges: ["1:1"] }
-```
+### Phase 15: QF User API Integration
+> Integrate Quran Foundation User APIs for bookmarks, highlights, sync progress
 
-- [ ] Add QF User API base URL to config (prelive: `https://api-prelive.quran.foundation`)
-- [ ] Create `POST /api/qf/notes` endpoint to publish single verse reflection
-- [ ] Add `qf_published_at` column to `note_verses` table (track publish status)
-- [ ] Add "Publish to Quran.com" button on verse detail page (per reflection)
-- [ ] Show "Published ✓" badge on successfully published reflections
+**Planned Features:**
+- [ ] Save user bookmarks/favorites to QF profile
+- [ ] Sync reading progress
+- [ ] User-specific highlights backup
+
+**Current Status:**
+- Not started - OAuth scope support exists in `qfHttp.ts`
+- Need User API credentials and endpoint documentation
 
 **Implementation Notes:**
-- Extract reflection text from note content for specific verse_key
-- Map Qayra verse_key (e.g., "1:1") to QF range format (e.g., "1:1-1:1")
-- Handle auth: Use QF access token (obtained same way as Content API)
+- QF user APIs use separate base URL (`userApiBase` in config)
+- Token scope: `note` (mapped from `user` scope in OAuth)
+- Requires OAuth token with `user` scope
 
 ---
 
@@ -86,54 +106,27 @@ QF: POST /v1/notes { body: "...", ranges: ["1:1"] }
 
 **Vision:** Browse Quran + Hadith + make reflections on both
 
-**Data Source:** `@quranmcp/server` - provides Hadith collections:
-- Sahih Bukhari (7,563)
-- Sahih Muslim (7,563)
-- Sunan Abu Dawud (5,274)
-- Jami' at-Tirmidhi (3,956)
-- Sunan an-Nasa'i (5,758)
-- Sunan Ibn Majah (4,341)
+**Data Source:** Local data (`data/hadithBooks.ts`) or remote MCP
 
-**Features:**
-- [ ] Browse Hadith collections (6 major collections)
-- [ ] Browse by book/chapter
-- [ ] Search Hadith by keywords
-- [ ] Search Hadith by topic
-- [ ] Add note/reflection on Hadith
-- [ ] Show related ahadith on verse detail page
+**Features (Not Started):**
+- [ ] Browse Hadith collections (future)
+- [ ] Browse by book/chapter (future)
+- [ ] Search Hadith (future)
+- [ ] Add note/reflection on Hadith (future)
+- [ ] Show related ahadith on verse detail page (future)
+
+Note: Hadith API infrastructure exists (`/api/hadith/*`) but navigation is commented out. Not a priority.
 
 ### Phase 13: Browse by Category/Topic
 > Browse Quran and Hadith by Islamic topics
 
-**Topics:** prayer, patience, charity, faith, paradise, hell, prophet, allah, mercy, justice, knowledge, family, death, creation, guidance
+ Topics: prayer, patience, charity, faith, paradise, hell, prophet, allah, mercy, justice, knowledge, family, death, creation, guidance
 
 **Features:**
-- [ ] Category/Topic pages for Quran
-- [ ] Category/Topic pages for Hadith
-- [ ] Topic-based discovery (AI understands topics)
-
-### Phase 14: Hybrid MCP Architecture
-> Use remote MCP but fall back to local when rate limited
-
-**Pattern:**
-```
-1. Try remote MCP (npx @quranmcp/server)
-2. If rate limited → fall back to local cache
-3. Local cache populated from initial sync
-```
-
-**Implementation:**
-- [ ] Add MCP fetcher with fallback logic
-- [ ] Implement local cache for Hadith data
-- [ ] Handle offline gracefully
-- [ ] Sync strategy for cache population
+- [x] Category/Topic pages for Quran (completed in Phase 10)
+- [ ] Category/Topic pages for Hadith (future)
 
 ---
-
-## Remaining / Optional
-
-- [ ] Custom 404 page — premium "page not found" experience
-- [ ] RTK optimization — implement request caching/token optimization if needed
 
 ## Database Setup
 
@@ -144,8 +137,7 @@ Run migrations in Supabase Dashboard SQL Editor (no CLI needed):
    - `supabase/migrations/20260414000000_notes.sql`
    - `supabase/migrations/20260414001000_disable_rls_for_testing.sql` (optional, for testing)
    - `supabase/migrations/20260414002000_sources_and_speakers.sql`
-
-See [`SUPABASE_MIGRATIONS.md`](../SUPABASE_MIGRATIONS.md) for details.
+   - Additional migrations as needed
 
 ## Verify locally
 
