@@ -46,6 +46,7 @@ export default defineNuxtConfig({
     qfApiBase: process.env.QF_API_BASE || qfConfig.apiBase,
     qfUserApiBase: process.env.QF_USER_API_BASE || qfConfig.userApiBase,
     qfOAuthTokenUrl: process.env.QF_OAUTH_TOKEN_URL || qfConfig.oauthTokenUrl,
+    qfOAuthRedirectUri: process.env.QF_OAUTH_REDIRECT_URI,
     qfTranslationIds: process.env.QF_TRANSLATION_IDS || '85',
     public: {
       qfBase: process.env.NUXT_PUBLIC_QF_BASE || qfConfig.apiBase,
