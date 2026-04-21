@@ -1,6 +1,10 @@
 import { readBody, getQuery, createError } from 'h3'
 import { exchangeAuthorizationCode, decodeIdToken } from '~/server/utils/qfTokenExchange'
-import { getQfOAuthConfig } from '~/server/utils/qfOAuthConfig'
+import { getQfOAuthConfig, getQfEnvKey } from '~/server/utils/qfOAuthConfig'
+
+function getEnvCookiePrefix(): string {
+  return `qf_${getQfEnvKey()}_`
+}
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -29,8 +33,11 @@ export default defineEventHandler(async (event) => {
       })
     }
     
+    // Get env prefix
+    const envPrefix = getEnvCookiePrefix()
+    
     // Validate state from cookie
-    const storedState = getCookie(event, 'qf_oauth_state')
+    const storedState = getCookie(event, `${envPrefix}oauth_state`)
     if (!storedState || storedState !== state) {
       throw createError({
         statusCode: 400,
@@ -39,7 +46,7 @@ export default defineEventHandler(async (event) => {
     }
     
     // Get stored code verifier from cookie
-    const codeVerifier = getCookie(event, 'qf_oauth_code_verifier')
+    const codeVerifier = getCookie(event, `${envPrefix}oauth_code_verifier`)
     if (!codeVerifier) {
       throw createError({
         statusCode: 400,
@@ -48,7 +55,7 @@ export default defineEventHandler(async (event) => {
     }
     
     // Get stored redirect URI
-    const redirectUri = getCookie(event, 'qf_oauth_redirect_uri')
+    const redirectUri = getCookie(event, `${envPrefix}oauth_redirect_uri`)
     if (!redirectUri) {
       throw createError({
         statusCode: 400,
@@ -80,25 +87,26 @@ export default defineEventHandler(async (event) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax' as const,
+        path: '/',
         maxAge: tokens.expires_in
       }
       
-      setCookie(event, 'qf_access_token', tokens.access_token, {
+      setCookie(event, `${envPrefix}access_token`, tokens.access_token, {
         ...cookieOptions,
         maxAge: tokens.expires_in
       })
       
       if (tokens.refresh_token) {
-        setCookie(event, 'qf_refresh_token', tokens.refresh_token, {
+        setCookie(event, `${envPrefix}refresh_token`, tokens.refresh_token, {
           ...cookieOptions,
           maxAge: 60 * 60 * 24 * 30 // 30 days
         })
       }
       
       // Clear OAuth temp cookies
-      deleteCookie(event, 'qf_oauth_state')
-      deleteCookie(event, 'qf_oauth_code_verifier')
-      deleteCookie(event, 'qf_oauth_redirect_uri')
+      deleteCookie(event, `${envPrefix}oauth_state`)
+      deleteCookie(event, `${envPrefix}oauth_code_verifier`)
+      deleteCookie(event, `${envPrefix}oauth_redirect_uri`)
       
       // Return success with user info (tokens are in cookies)
       return {
@@ -133,6 +141,7 @@ export default defineEventHandler(async (event) => {
     // Import PKCE helper
     const { buildAuthorizationUrl } = await import('~/server/utils/qfPkce')
     const config = getQfOAuthConfig()
+    const envPrefix = getEnvCookiePrefix()
     
     // Generate auth URL
     const { url, state, nonce, codeVerifier } = buildAuthorizationUrl({
@@ -146,12 +155,13 @@ export default defineEventHandler(async (event) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
+      path: '/',
       maxAge: 60 * 10 // 10 minutes
     }
     
-    setCookie(event, 'qf_oauth_state', state, cookieOptions)
-    setCookie(event, 'qf_oauth_code_verifier', codeVerifier, cookieOptions)
-    setCookie(event, 'qf_oauth_redirect_uri', redirectUri, cookieOptions)
+    setCookie(event, `${envPrefix}oauth_state`, state, cookieOptions)
+    setCookie(event, `${envPrefix}oauth_code_verifier`, codeVerifier, cookieOptions)
+    setCookie(event, `${envPrefix}oauth_redirect_uri`, redirectUri, cookieOptions)
     
     // Return the auth URL to redirect to
     return { url }
