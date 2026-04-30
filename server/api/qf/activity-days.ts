@@ -10,14 +10,16 @@ export default defineEventHandler(async (event) => {
     const to = (query.to as string) || new Date().toISOString().split('T')[0]
     
     try {
-      const result = await getQFActivity(from, to)
+      const result = await getQFActivity(event, from, to)
       
       return {
         activities: result.activities || [],
         error: result.error
       }
     } catch (error: any) {
-      console.error('QF Activity Days GET Error:', error?.message || error)
+      if (!error?.message?.includes('No QF access token')) {
+        console.error('QF Activity Days GET Error:', error?.message || error)
+      }
       return {
         activities: [],
         error: error?.message || 'Failed to fetch activity days'
@@ -32,7 +34,7 @@ export default defineEventHandler(async (event) => {
     const ranges = (body.ranges as string[]) || []
     const seconds = body.seconds || 60
     
-    const result = await logQFActivity({
+    const result = await logQFActivity(event, {
       type: type as 'QURAN' | 'LESSON' | 'QURAN_READING_PROGRAM',
       seconds,
       ranges,

@@ -12,17 +12,34 @@ export default defineEventHandler(async (event) => {
 
   const { data: notes, error } = await client
     .from('notes')
-    .select('id, created_at')
-    .order('created_at', { ascending: true })
+    .select('id, title, content, created_at, note_verses(verse_key)')
+    .order('created_at', { ascending: false })
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message })
   }
 
   const activityByDate: Record<string, number> = {}
+  const noteDetails: Array<{
+    id: string
+    date: string
+    title?: string
+    verseKeys: string[]
+    created_at: string
+  }> = []
+
   for (const note of notes ?? []) {
     const dateStr = note.created_at.split('T')[0]
     activityByDate[dateStr] = (activityByDate[dateStr] || 0) + 1
+
+    const verseKeys = (note.note_verses || []).map((v: any) => v.verse_key)
+    noteDetails.push({
+      id: note.id,
+      date: dateStr,
+      title: note.title || undefined,
+      verseKeys,
+      created_at: note.created_at
+    })
   }
 
   const today = new Date()
@@ -39,7 +56,7 @@ export default defineEventHandler(async (event) => {
   
   let currentDate = new Date(startDate)
   
-  while (currentDate <= today) {
+  while (formatLocalDate(currentDate) <= todayStr) {
     const week: Array<{ date: string; count: number; level: number; dayName: string }> = []
     
     for (let i = 0; i < 7; i++) {
@@ -103,6 +120,7 @@ export default defineEventHandler(async (event) => {
     monthLabels,
     totalContributions,
     totalDays: activeDays,
+    noteDetails,
     generatedAt: todayStr
   }
 })

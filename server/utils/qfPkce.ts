@@ -46,13 +46,13 @@ function generateNonce(): string {
 /**
  * Default scopes for QF User APIs
  */
-export const DEFAULT_SCOPES = 'openid offline_access user activity_day'
+export const DEFAULT_SCOPES = 'openid offline_access activity_day streak'
 
 /**
  * Build authorization URL for Quran Foundation OAuth2
  * 
  * @param redirectUri - The callback URI after authorization
- * @param scopes - OAuth scopes (default: openid offline_access user activity_day)
+ * @param scopes - OAuth scopes (default: DEFAULT_SCOPES)
  * @param authBaseUrl - QF auth base URL from getQfOAuthConfig()
  * @param clientId - QF client ID from getQfOAuthConfig()
  * 
@@ -72,17 +72,11 @@ export function buildAuthorizationUrl(options: {
 } {
   const { redirectUri, scopes = DEFAULT_SCOPES, authBaseUrl, clientId } = options
   
-  // Generate PKCE
-  const { codeChallenge } = generatePkcePair()
-  
   // Generate state and nonce
   const state = generateState()
   const nonce = generateNonce()
   
-  // Build code_challenge from a new code_verifier
-  const codeVerifier = base64url(crypto.randomBytes(32))
-  const hash = crypto.createHash('sha256').update(codeVerifier).digest()
-  const finalCodeChallenge = base64url(hash)
+  const { codeVerifier, codeChallenge } = generatePkcePair()
   
   // Build URL
   const params = new URLSearchParams()
@@ -92,8 +86,9 @@ export function buildAuthorizationUrl(options: {
   params.set('scope', scopes)
   params.set('state', state)
   params.set('nonce', nonce)
-  params.set('code_challenge', finalCodeChallenge)
+  params.set('code_challenge', codeChallenge)
   params.set('code_challenge_method', PKCE_METHOD)
+  params.set('prompt', 'consent') // Required to initialize fresh CSRF session on QF Hydra
   
   const url = `${authBaseUrl}/oauth2/auth?${params.toString()}`
   

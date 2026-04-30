@@ -51,11 +51,15 @@ export default defineEventHandler(async (event) => {
   // Log activity to Quran Foundation (note-taking = LESSON activity)
   // Estimate time: 60 seconds per note as baseline
   const seconds = Math.max(60, content.length / 10) // ~10 chars per second + 60s baseline
-  logQFActivity({
+  logQFActivity(event, {
     type: 'LESSON',
     seconds: Math.round(seconds),
     ranges: keys.length > 0 ? [keys[0] + '-' + keys[keys.length - 1]] : undefined
-  }).catch(err => console.error('[QF Activity] Note logging failed:', err))
+  }).catch(err => {
+    if (!err?.message?.includes('No QF access token')) {
+      console.error('[QF Activity] Note logging failed:', err)
+    }
+  })
 
   return { note }
 })

@@ -15,7 +15,7 @@
       <div v-else-if="success" class="flex flex-col items-center gap-4">
         <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-500" />
         <p class="text-green-600 font-medium">Successfully connected!</p>
-        <p class="text-stone-500 text-sm">Redirecting to heatmap...</p>
+        <p class="text-stone-500 text-sm">Redirecting...</p>
       </div>
     </div>
   </div>
@@ -35,34 +35,26 @@ onMounted(async () => {
 
   if (errorParam) {
     loading.value = false
-    error.value = errorDescription || errorParam
+    error.value = decodeURIComponent(errorDescription || errorParam)
     return
   }
 
-  if (!code || !state) {
+  if (!code) {
     loading.value = false
-    error.value = 'Missing authorization code or state'
+    error.value = 'Missing authorization code'
     return
   }
 
   try {
-    const response = await $fetch<{
-      success: boolean
-      user?: { id: string; email: string }
-      error?: string
-    }>('/api/qf/oauth/callback', {
+    await $fetch('/api/qf/oauth/callback', {
       method: 'GET',
-      query: { code, state }
+      query: { code, state, redirect: route.query.redirect || '/heatmap' }
     })
 
-    if (response.success) {
-      success.value = true
-      setTimeout(() => {
-        navigateTo('/heatmap')
-      }, 1500)
-    } else {
-      error.value = response.error || 'Authentication failed'
-    }
+    success.value = true
+    setTimeout(() => {
+      navigateTo('/heatmap')
+    }, 1000)
   } catch (err: any) {
     error.value = err.message || 'Failed to complete authentication'
   } finally {

@@ -7,6 +7,7 @@ export interface QfOAuthConfig {
   authBaseUrl: string
   apiBaseUrl: string
   redirectUri: string | undefined
+  scopes: string | undefined
   isPublicClient: boolean
 }
 
@@ -36,6 +37,7 @@ export function getQfOAuthConfig(): QfOAuthConfig {
   const clientId = config.qfClientId as string | undefined
   const clientSecret = config.qfClientSecret as string | undefined
   const redirectUri = config.qfOAuthRedirectUri as string | undefined
+  const scopes = config.qfOAuthScopes as string | undefined
 
   if (!clientId) {
     throw new Error(
@@ -43,7 +45,7 @@ export function getQfOAuthConfig(): QfOAuthConfig {
     )
   }
 
-  const env = (process.env.QF_ENV === 'production' ? 'production' : 'prelive') as 'prelive' | 'production'
+  const env = (process.env.QF_ENV === 'production' || process.env.QF_ENV === 'live' ? 'production' : 'prelive') as 'prelive' | 'production'
   
   const envConfig = QF_CONFIG_MAP[env]
   const isPublicClient = !clientSecret
@@ -53,6 +55,7 @@ export function getQfOAuthConfig(): QfOAuthConfig {
     clientId,
     clientSecret,
     redirectUri,
+    scopes,
     authBaseUrl: envConfig.authBaseUrl,
     apiBaseUrl: envConfig.apiBaseUrl,
     isPublicClient
@@ -63,7 +66,7 @@ export function getQfOAuthConfig(): QfOAuthConfig {
  * Check if currently using prelive environment
  */
 export function isPrelive(): boolean {
-  return process.env.QF_ENV !== 'production'
+  return process.env.QF_ENV !== 'production' && process.env.QF_ENV !== 'live'
 }
 
 /**
@@ -71,7 +74,7 @@ export function isPrelive(): boolean {
  * Returns 'prelive' or 'production' - used for cookie/session prefixes
  */
 export function getQfEnvKey(): 'prelive' | 'production' {
-  return process.env.QF_ENV === 'production' ? 'production' : 'prelive'
+  return process.env.QF_ENV === 'production' || process.env.QF_ENV === 'live' ? 'production' : 'prelive'
 }
 
 /**

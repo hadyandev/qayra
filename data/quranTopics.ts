@@ -22,7 +22,7 @@ export const quranTopics: Topic[] = [
     slug: 'prayer',
     name: 'Prayer & Worship',
     description: 'Verses about prayer, salah, and worship',
-    icon: 'i-heroicons-hands-praying',
+    icon: 'i-heroicons-hand-raised',
     color: 'blue',
     verses: [
       '2:45', '2:83', '2:125', '2:153', '2:177', '4:162', '11:114', '17:78', '23:118', '29:45'

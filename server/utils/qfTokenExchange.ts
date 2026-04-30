@@ -85,10 +85,28 @@ export async function exchangeAuthorizationCode(options: ExchangeOptions): Promi
  * Prefer refreshQfToken from qfTokenRefresh.ts
  */
 export async function exchangeRefreshToken(refreshToken: string): Promise<TokenResponse> {
-  const { refreshQfToken } = await import('./qfTokenRefresh')
+  const config = getQfOAuthConfig()
+  const { authBaseUrl, clientId, clientSecret } = config
+  const isConfidential = !config.isPublicClient && !!clientSecret
+  const params = new URLSearchParams()
+  params.set('grant_type', 'refresh_token')
+  params.set('refresh_token', refreshToken)
   
-  // Create a minimal event-like object for the refresh
-  const result = await refreshQfToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  }
+
+  if (isConfidential && clientSecret) {
+    headers.Authorization = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+  } else {
+    params.set('client_id', clientId)
+  }
+
+  const result = await $fetch<TokenResponse>(`${authBaseUrl}/oauth2/token`, {
+    method: 'POST',
+    headers,
+    body: params.toString()
+  })
   
   return {
     access_token: result.access_token,
@@ -106,6 +124,8 @@ export async function exchangeRefreshToken(refreshToken: string): Promise<TokenR
 export interface IdTokenPayload {
   sub: string
   email?: string
+  first_name?: string
+  last_name?: string
   iat: number
   exp: number
 }

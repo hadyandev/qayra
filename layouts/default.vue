@@ -70,6 +70,34 @@
                   <div class="px-4 py-3 border-b border-stone-100 dark:border-stone-800">
                     <p class="text-sm font-medium text-[#18181B] dark:text-stone-100 truncate">{{ userEmail }}</p>
                   </div>
+                  
+                  <div class="px-4 py-3 border-b border-stone-100 dark:border-stone-800">
+                    <div v-if="loading" class="flex items-center gap-2">
+                      <UIcon name="i-heroicons-arrow-path" class="w-3 h-3 animate-spin text-stone-400" />
+                      <span class="text-xs text-stone-400">Checking connection...</span>
+                    </div>
+                    <div v-else-if="qfConnection?.connected" class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span class="text-xs text-stone-500 dark:text-stone-400">QF Connected</span>
+                      </div>
+                      <button 
+                        @click="handleDisconnectQf"
+                        class="text-xs text-red-500 hover:text-red-600 transition-colors"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                    <button 
+                      v-else
+                      @click="openQfConnect"
+                      class="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                    >
+                      <UIcon name="i-heroicons-link" class="w-3.5 h-3.5" />
+                      Connect QF Account
+                    </button>
+                  </div>
+
                   <div class="py-1">
                     <button 
                       @click="signOut"
@@ -106,6 +134,16 @@
     </footer>
 
     <CommandPalette ref="commandPalette" />
+    <QfConnectModal 
+      v-model="showQfModal" 
+      :is-connected="qfConnection?.connected"
+      :qf-email="qfConnection?.qf_email"
+      :qf-sub="qfConnection?.qf_sub"
+      :scopes="qfConnection?.scopes"
+      :connected-at="qfConnection?.connected_at"
+      @connected="onQfConnected"
+      @disconnect="handleDisconnectQf"
+    />
   </div>
 </template>
 
@@ -130,6 +168,44 @@ const colorMode = useColorMode()
 const commandPalette = ref<{ open: () => void } | null>(null)
 const showUserMenu = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
+const showQfModal = ref(false)
+
+const { connection: qfConnection, loading, fetchConnection, disconnect: disconnectQf } = useQfConnection()
+
+onMounted(async () => {
+  document.addEventListener('click', handleClickOutside)
+  if (user.value) {
+    await fetchConnection()
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+watch(user, async (newUser) => {
+  if (newUser) {
+    await fetchConnection()
+  } else {
+    qfConnection.value = null
+  }
+})
+
+function openQfConnect() {
+  showUserMenu.value = false
+  showQfModal.value = true
+}
+
+async function handleDisconnectQf() {
+  showUserMenu.value = false
+  await disconnectQf()
+  await fetchConnection()
+}
+
+function onQfConnected() {
+  showQfModal.value = false
+  fetchConnection()
+}
 
 const userEmail = computed(() => {
   return user.value?.email || 'User'
@@ -176,12 +252,4 @@ function handleClickOutside(event: MouseEvent) {
     showUserMenu.value = false
   }
 }
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>

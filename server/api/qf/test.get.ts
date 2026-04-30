@@ -1,15 +1,15 @@
-import { qfFetchJson } from '../../utils/qfHttp'
+import { qfUserFetch } from '../../utils/qfUserClient'
 
 export default defineEventHandler(async (event) => {
   console.log('[QF] Testing User API (notes scope)...')
   
   try {
-    // Test QF User API - Get notes with 'note' scope
-    const data = await qfFetchJson<{
+    // Test QF User API with the signed-in user's OAuth token.
+    const data = await qfUserFetch<{
       success?: boolean
       data?: unknown[]
       message?: string
-    }>('/v1/notes', { limit: '5' }, 'user')
+    }>('/auth/v1/notes', { query: { limit: '5' } }, event)
     
     console.log('[QF User API] Response:', JSON.stringify(data).slice(0, 500))
     

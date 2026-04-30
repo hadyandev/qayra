@@ -1,7 +1,8 @@
 import { $fetch } from 'ofetch'
-import { getQfOAuthConfig } from './qfOAuthConfig'
-import { exchangeRefreshToken, type TokenResponse } from './qfTokenExchange'
-import { parseApiError, logQfError, requiresReAuth, isRetryable } from './qfErrors'
+import { getCookie, setCookie, type H3Event } from 'h3'
+import { getQfOAuthConfig, getQfEnvKey } from './qfOAuthConfig'
+import { refreshQfToken } from './qfTokenRefresh'
+import { parseApiError, logQfError, requiresReAuth } from './qfErrors'
 
 declare module 'h3' {
   interface H3Event {
@@ -19,57 +20,81 @@ export interface QfApiOptions {
   scope?: 'content' | 'user' | 'activity_day' | 'streak' | 'bookmark' | 'goal' | 'reading_session'
 }
 
-let cachedRefreshToken: string | undefined
-let cachedAccessToken: string | undefined
-let tokenExpiresAt: number | undefined
+type QfRequestOptions = {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  query?: Record<string, string | number | undefined>
+  body?: unknown
+  headers?: Record<string, string>
+  retried?: boolean
+}
 
 /**
- * Get QF access token from cookies or cache
+ * Get environment-specific cookie prefix
  */
-function getAccessToken(event?: { context: { qfTokens?: { accessToken: string; refreshToken?: string } } }): string | undefined {
-  // If we have event context with tokens, use those
-  if (event?.context?.qfTokens?.accessToken) {
-    return event.context.qfTokens.accessToken
+function getEnvCookiePrefix(): string {
+  return `qf_${getQfEnvKey()}_`
+}
+
+/**
+ * Get QF access token from request context or secure cookie
+ */
+function getAccessToken(event: H3Event): string | undefined {
+  return event.context.qfTokens?.accessToken || getCookie(event, `${getEnvCookiePrefix()}access_token`) || undefined
+}
+
+/**
+ * Get QF refresh token from request context or secure cookie
+ */
+function getRefreshToken(event: H3Event): string | undefined {
+  return event.context.qfTokens?.refreshToken || getCookie(event, `${getEnvCookiePrefix()}refresh_token`) || undefined
+}
+
+/**
+ * Store refreshed tokens in context and secure cookies
+ */
+function storeRefreshedTokens(event: H3Event, tokens: { access_token: string; refresh_token?: string; expires_in: number }) {
+  const envPrefix = getEnvCookiePrefix()
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/'
   }
-  
-  // Otherwise use module-level cache
-  return cachedAccessToken
-}
 
-/**
- * Get QF refresh token from cookies or cache
- */
-function getRefreshToken(event?: { context: { qfTokens?: { accessToken: string; refreshToken?: string } } }): string | undefined {
-  if (event?.context?.qfTokens?.refreshToken) {
-    return event.context.qfTokens.refreshToken
+  event.context.qfTokens = {
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token || getRefreshToken(event),
+    expiresAt: Date.now() + tokens.expires_in * 1000
   }
-  return cachedRefreshToken
-}
 
-/**
- * Set token cache (called after OAuth login)
- */
-export function setTokenCache(accessToken: string, refreshToken?: string, expiresIn?: number) {
-  cachedAccessToken = accessToken
-  cachedRefreshToken = refreshToken
-  tokenExpiresAt = expiresIn ? Date.now() + (expiresIn * 1000) : undefined
-}
+  setCookie(event, `${envPrefix}access_token`, tokens.access_token, {
+    ...cookieOptions,
+    maxAge: tokens.expires_in
+  })
 
-/**
- * Clear token cache (called on logout)
- */
-export function clearTokenCache() {
-  cachedAccessToken = undefined
-  cachedRefreshToken = undefined
-  tokenExpiresAt = undefined
+  if (tokens.refresh_token) {
+    setCookie(event, `${envPrefix}refresh_token`, tokens.refresh_token, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 24 * 30
+    })
+  }
 }
 
 /**
  * Check if token is about to expire (within 5 minutes)
  */
-function isTokenExpiringSoon(): boolean {
-  if (!tokenExpiresAt) return false
-  return Date.now() > tokenExpiresAt - (5 * 60 * 1000)
+function isTokenExpiringSoon(event: H3Event): boolean {
+  const expiresAt = event.context.qfTokens?.expiresAt
+  if (!expiresAt) return false
+  return Date.now() > expiresAt - (5 * 60 * 1000)
+}
+
+async function refreshAccessToken(event: H3Event): Promise<string | undefined> {
+  if (!getRefreshToken(event)) return undefined
+
+  const tokens = await refreshQfToken(event)
+  storeRefreshedTokens(event, tokens)
+  return tokens.access_token
 }
 
 /**
@@ -88,30 +113,22 @@ function isTokenExpiringSoon(): boolean {
  */
 export async function qfUserFetch<T>(
   path: string,
-  options: {
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-    query?: Record<string, string | number | undefined>
-    body?: unknown
-    headers?: Record<string, string>
-  } = {},
-  event?: { context: { qfTokens?: { accessToken: string; refreshToken?: string } } }
+  options: QfRequestOptions = {},
+  event?: H3Event
 ): Promise<T> {
+  if (!event) {
+    throw new Error('No request context. User API calls require a logged-in QF session.')
+  }
+
   const config = getQfOAuthConfig()
   let accessToken = getAccessToken(event)
   
   // Check if token needs refresh
-  if (!accessToken || isTokenExpiringSoon()) {
-    const refreshToken = getRefreshToken(event)
-    if (refreshToken) {
-      try {
-        const tokens = await exchangeRefreshToken(refreshToken)
-        accessToken = tokens.access_token
-        setTokenCache(tokens.access_token, tokens.refresh_token, tokens.expires_in)
-      } catch (err) {
-        // Refresh failed - clear cache and let request fail
-        clearTokenCache()
-        accessToken = undefined
-      }
+  if (!accessToken || isTokenExpiringSoon(event)) {
+    try {
+      accessToken = await refreshAccessToken(event)
+    } catch {
+      accessToken = undefined
     }
   }
   
@@ -143,25 +160,19 @@ export async function qfUserFetch<T>(
     const errorData = error.data || error.response?.data || {}
     
     // Handle 401 - try refreshing token once
-    if (status === 401 && !options._retried) {
-      const refreshToken = getRefreshToken(event)
-      if (refreshToken) {
-        try {
-          const tokens: TokenResponse = await exchangeRefreshToken(refreshToken)
-          setTokenCache(tokens.access_token, tokens.refresh_token, tokens.expires_in)
-          
-          // Retry with new token
-          return await qfUserFetch<T>(path, {
-            ...options,
-            _retried: true
-          }, event)
-        } catch (refreshErr) {
-          clearTokenCache()
-          const parsed = parseApiError({ message: 'Session expired' }, 401)
-          logQfError(parsed, { endpoint: path, action: 'api_call' })
-          throw new Error('Session expired. Please log in again.')
-        }
+    if (status === 401 && !options.retried && getRefreshToken(event)) {
+      try {
+        await refreshAccessToken(event)
+      } catch {
+        const parsed = parseApiError({ message: 'Session expired' }, 401)
+        logQfError(parsed, { endpoint: path, action: 'api_call' })
+        throw new Error('Session expired. Please log in again.')
       }
+
+      return await qfUserFetch<T>(path, {
+        ...options,
+        retried: true
+      }, event)
     }
     
     // Parse and log error safely
@@ -174,13 +185,6 @@ export async function qfUserFetch<T>(
     }
     
     throw new Error(parsed.hint || 'API request failed')
-  }
-}
-
-// Internal flag to prevent infinite retry loops
-declare module 'h3' {
-  interface H3Event {
-    _qfRetried?: boolean
   }
 }
 
@@ -198,9 +202,10 @@ export async function qfUserApi<T>(
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
     query?: Record<string, string | number | undefined>
     body?: unknown
-  } = {}
+  } = {},
+  event?: H3Event
 ): Promise<T> {
-  return qfUserFetch<T>(endpoint, fetchOptions)
+  return qfUserFetch<T>(endpoint, fetchOptions, event)
 }
 
 /**
@@ -211,6 +216,7 @@ export async function qfUserApi<T>(
  * @param type - Activity type: 'QURAN' | 'LESSON' | 'QURAN_READING_PROGRAM'
  */
 export async function getUserActivityDays(
+  event: H3Event,
   from?: string,
   to?: string,
   type?: 'QURAN' | 'LESSON' | 'QURAN_READING_PROGRAM'
@@ -235,13 +241,13 @@ export async function getUserActivityDays(
       secondsRead?: number
       ranges?: string[]
     }>
-  }>('/auth/v1/activity-days', { query })
+  }>('/auth/v1/activity-days', { query }, event)
 }
 
 /**
  * Get user's streaks from QF
  */
-export async function getUserStreaks() {
+export async function getUserStreaks(event: H3Event) {
   return qfUserApi<{
     success: boolean
     data: {
@@ -249,13 +255,13 @@ export async function getUserStreaks() {
       longestStreak: number
       lastActivityDate: string
     }
-  }>('/auth/v1/streaks')
+  }>('/auth/v1/streaks', {}, event)
 }
 
 /**
  * Get user's bookmarks from QF
  */
-export async function getUserBookmarks(first: number = 20) {
+export async function getUserBookmarks(event: H3Event, first: number = 20) {
   return qfUserApi<{
     success: boolean
     data: Array<{
@@ -263,5 +269,5 @@ export async function getUserBookmarks(first: number = 20) {
       verseKey: string
       createdAt: string
     }>
-  }>('/auth/v1/bookmarks', { query: { first } })
+  }>('/auth/v1/bookmarks', { query: { first } }, event)
 }

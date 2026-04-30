@@ -1,5 +1,5 @@
 import { getQuery } from 'h3'
-import { qfFetchJson } from '../../utils/qfHttp'
+import { qfUserFetch } from '../../utils/qfUserClient'
 
 interface StreakData {
   id: string
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Get streaks from QF User API
-    const data = await qfFetchJson<{
+    const data = await qfUserFetch<{
       success: boolean
       data: StreakData[]
       pagination: {
@@ -24,17 +24,21 @@ export default defineEventHandler(async (event) => {
         hasPreviousPage: boolean
       }
     }>('/auth/v1/streaks', {
-      type,
-      first
-    }, 'streak')
+      query: {
+        type,
+        first
+      }
+    }, event)
 
     // Get current streak days
-    const currentStreakRes = await qfFetchJson<{
+    const currentStreakRes = await qfUserFetch<{
       success: boolean
       data: { days: number }
     }>('/auth/v1/streaks/current-streak-days', {
-      type
-    }, 'streak')
+      query: {
+        type
+      }
+    }, event)
 
     return {
       streaks: data.data || [],
