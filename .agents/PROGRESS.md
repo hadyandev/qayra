@@ -1,6 +1,6 @@
 # Qayra — progress
 
-**Last updated:** 2026-04-19
+**Last updated:** 2026-05-01
 
 ## Implemented
 
@@ -16,6 +16,84 @@
 - **README / `.env.example`** document setup.
 - **Prelive flag** - displays PRELIVE badge in top-left corner when `QF_ENV=prelive`
 - **Random verse restriction** - only chapters 1-2 in prelive mode
+- **QF OAuth2 Integration (PKCE + Supabase persistence)** — completed 2026-05-01
+
+## QF OAuth2 Integration (2026-05-01)
+
+### What was built
+- **OAuth Authorization Code + PKCE flow** replacing client_credentials
+- **Scopes:** `openid offline_access activity_day streak`
+- **Supabase persistence:** `qf_connections` table stores refresh token, user info, scopes
+- **Auto-restore middleware:** `server/middleware/qf-session.ts` restores QF session on every page load when cookies are missing
+- **One-time login:** User connects QF account once, stays connected across browser sessions
+
+### New files
+- `supabase/migrations/20260421000000_qf_connections.sql` — Table with RLS policies
+- `server/api/qf/connection.get.ts` — Connection status API
+- `server/api/qf/connection.delete.ts` — Disconnect API (revoke token + delete local record)
+- `server/middleware/qf-session.ts` — Auto-restores QF session from Supabase on page load
+- `composables/useQfConnection.ts` — Frontend composable for connection state
+- `server/api/qf/oauth/callback.ts` — OAuth callback (GET + POST), saves to Supabase
+
+### Modified files
+- `server/api/qf/oauth/login.get.ts` — PKCE auth URL + custom redirect support
+- `server/utils/qfTokenExchange.ts` — Added `first_name`/`last_name` to IdTokenPayload
+- `server/api/qf/user-activity.get.ts` — Returns ranges from QF activity
+- `server/api/activity/index.get.ts` — Returns note details with titles + verse keys
+- `layouts/default.vue` — User menu shows QF status (green dot / Connect button)
+- `components/QfConnectModal.vue` — Connected/disconnected states
+- `pages/oauth/callback.vue` — OAuth callback page with redirect
+- `pages/heatmap/index.vue` — Complete rewrite (see below)
+
+### Disconnect behavior
+Disconnecting revokes the token on QF's `/oauth2/revoke` endpoint, deletes the local `qf_connections` record, and clears cookies. No redirects or extra steps.
+
+## Heatmap / Statistics Page Rewrite (2026-05-01)
+
+### Calendar
+- Combined activity calendar showing **both notes + reading sessions** on one GitHub-style grid
+- Fixed date mismatch: uses local dates (`formatLocalDate`) instead of UTC (`toISOString`) so today's readings appear correctly
+- Click any cell to see breakdown (notes vs readings count)
+- Amber color scale (4 levels) for contribution intensity
+
+### Stats cards
+- **Notes** — total notes count
+- **Reading Sessions** — total QF reading sessions
+- **Active Days** — unique days with any activity
+- **Completion** — percentage of verses with notes
+
+### Recent Activity List
+- Combined list of notes + reading sessions, sorted by date
+- **Notes with verses:** `Reflected on 2:255` — verse is clickable, navigates to `/verse/2:255`
+- **Notes with title only:** `Created note "My Thoughts"` — entire description clickable, navigates to `/notes/{id}`
+- **Reading sessions:** `Read 2:255-260, 3:1-5` — verse ranges are clickable, navigates to `/verse/{range}`
+- Multiple verse ranges shown up to 3, then `+N more`
+
+### Chapter Overview
+- Table showing all chapters with note counts and progress bars
+- Clickable rows navigate to chapter heatmap
+
+### Activity API (`/api/activity`)
+Now returns enriched data:
+```json
+{
+  "weeks": [...],
+  "noteDetails": [
+    { "id": "uuid", "date": "2026-05-01", "title": "My Note", "verseKeys": ["2:255"] }
+  ]
+}
+```
+
+### QF Activity API (`/api/qf/user-activity`)
+Returns activity with ranges:
+```json
+{
+  "authenticated": true,
+  "activities": [
+    { "date": "2026-05-01", "count": 60, "type": "QURAN", "ranges": ["2:255-260"] }
+  ]
+}
+```
 
 ## Recent Updates (2026-04-19)
 
@@ -52,18 +130,17 @@
 - Translations (via verses endpoint)
 - Search API (basic)
 
-### User APIs (PRELIVE - client_credentials)
+### User APIs (PRELIVE — OAuth PKCE)
 - POST to `/auth/v1/activity-days` works ✅
-- GET from `/auth/v1/activity-days` returns empty (requires user OAuth)
-- OAuth Authorization Code flow requires registered redirect_uri
+- GET from `/auth/v1/activity-days` works ✅ (with user OAuth token)
+- OAuth Authorization Code + PKCE flow fully implemented ✅
+- Auto-restore from Supabase ✅
+- Disconnect (revoke + cleanup) ✅
 
-### Limitation
-Using **client_credentials** OAuth - this allows POSTing activity but GET requires user authentication. To fully sync activity:
-1. Contact QF to register a redirect_uri
-2. Implement Authorization Code + PKCE flow
-3. User logs in → use their access_token for GET
-
-For now, heatmap uses local Supabase activity.
+### QF API constraints
+- `/auth/v1/activity-days` GET `first` param max: **20**
+- QF User APIs require user OAuth token (not client_credentials)
+- Refresh tokens are simple base64 (for now)
 
 ## Note on @quranjs/api
 

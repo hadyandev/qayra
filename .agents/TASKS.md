@@ -21,6 +21,31 @@
 - [x] QF API fixes: Fixed chapters/verse response mapping, default translation ID changed to 85
 - [x] Fallback verse data: First 10 verses (Arabic + translation) in verse API when QF returns empty
 
+## Session Updates (2026-05-01)
+
+### QF OAuth2 + Supabase Persistence
+- [x] Created `qf_connections` table migration with RLS policies
+- [x] OAuth callback saves connection to Supabase after token exchange
+- [x] Server middleware auto-restores QF session from stored refresh token
+- [x] Connection status API (`GET /api/qf/connection`)
+- [x] Disconnect API (`DELETE /api/qf/connection`) — revokes token on QF + deletes local record
+- [x] `useQfConnection` composable for frontend state
+- [x] User menu shows QF status (green dot when connected, "Connect" when not)
+- [x] QfConnectModal shows connected state with details and disconnect option
+- [x] OAuth callback redirects to previous page after success
+
+### Heatmap Page Rewrite
+- [x] Combined activity calendar (notes + reading) — no tabs
+- [x] Fixed calendar date display (local dates instead of UTC)
+- [x] Stat cards: Notes, Reading Sessions, Active Days, Completion %
+- [x] Recent activity list with meaningful descriptions
+- [x] Clickable verse references → `/verse/{chapter:verse}` or `/verse/{range}`
+- [x] Clickable note descriptions → `/notes/{id}`
+- [x] Chapter overview table with progress bars
+- [x] Activity API returns note titles + verse keys
+- [x] QF activity API returns verse ranges
+- [x] Fixed QF API error: `first` param limited to 20
+
 ## Session Updates (2026-04-19)
 
 - [x] Verse detail page fixes:
@@ -83,19 +108,28 @@
 ### Phase 15: QF User API Integration
 > Integrate Quran Foundation User APIs for bookmarks, highlights, sync progress
 
+**Completed (2026-05-01):**
+- [x] OAuth Authorization Code + PKCE flow
+- [x] Supabase persistence (`qf_connections` table)
+- [x] Auto-restore QF session on page load (`server/middleware/qf-session.ts`)
+- [x] Connection status API (`/api/qf/connection`)
+- [x] Disconnect API (revoke token on QF + delete local record)
+- [x] User menu shows QF connection status (green dot / Connect button)
+- [x] QfConnectModal with connected/disconnected states
+- [x] Heatmap combined activity calendar (notes + reading)
+- [x] Activity list with meaningful descriptions and clickable verses/notes
+- [x] OAuth callback redirects to previous page after success
+
 **Planned Features:**
 - [ ] Save user bookmarks/favorites to QF profile
-- [ ] Sync reading progress
+- [ ] Sync reading progress across apps
 - [ ] User-specific highlights backup
-
-**Current Status:**
-- Not started - OAuth scope support exists in `qfHttp.ts`
-- Need User API credentials and endpoint documentation
 
 **Implementation Notes:**
 - QF user APIs use separate base URL (`userApiBase` in config)
-- Token scope: `note` (mapped from `user` scope in OAuth)
-- Requires OAuth token with `user` scope
+- Token scopes: `openid offline_access activity_day streak`
+- Requires OAuth token (Authorization Code + PKCE)
+- Refresh tokens auto-restored from Supabase when cookies missing
 
 ---
 
@@ -137,6 +171,7 @@ Run migrations in Supabase Dashboard SQL Editor (no CLI needed):
    - `supabase/migrations/20260414000000_notes.sql`
    - `supabase/migrations/20260414001000_disable_rls_for_testing.sql` (optional, for testing)
    - `supabase/migrations/20260414002000_sources_and_speakers.sql`
+   - `supabase/migrations/20260421000000_qf_connections.sql` (QF OAuth persistence)
    - Additional migrations as needed
 
 ## Verify locally

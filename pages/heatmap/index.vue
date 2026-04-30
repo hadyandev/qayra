@@ -400,8 +400,7 @@ function navigateToChapter(id: number) {
 }
 
 function navigateToVerse(verseKey: string) {
-  const [chapter, verse] = verseKey.split(':')
-  router.push(`/verse/${chapter}/${verse}`)
+  router.push(`/verse/${verseKey}`)
 }
 
 function navigateToNote(noteId: string) {
