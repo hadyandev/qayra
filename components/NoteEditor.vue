@@ -169,7 +169,7 @@ const editor = useEditor({
     VerseRef,
     Placeholder.configure({
       placeholder:
-        'Write your reflection... Type @ to cite verses like @1:1 => "your thoughts..."'
+        'Write your reflection... Type @ to cite verses like @1:1 => ""'
     }),
     Mention.configure({
       HTMLAttributes: {
@@ -196,7 +196,7 @@ const editor = useEditor({
             editor.chain().focus().deleteRange(range).insertContent([
               {
                 type: 'text',
-                text: `@${verseKey} => "`
+                text: `@${verseKey} => ""`
               }
             ]).run()
             setTimeout(() => {

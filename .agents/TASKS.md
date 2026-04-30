@@ -46,6 +46,15 @@
 - [x] QF activity API returns verse ranges
 - [x] Fixed QF API error: `first` param limited to 20
 
+### Mention System Enhancements
+- [x] Keyboard navigation: Arrow keys + Enter to select, Escape to close
+- [x] Fixed search input keyboard event delegation (was trapping all keys)
+- [x] Verse preview in dropdown: Arabic text + English translation
+- [x] Chapter name shown in verse mode header
+- [x] Verse insertion format: `@2:255 => ""` with cursor between quotes
+- [x] New endpoint: `/api/quran/chapter-verses` for verse preview data
+- [x] Server-side caching for chapter verses (5 min)
+
 ## Session Updates (2026-04-19)
 
 - [x] Verse detail page fixes:

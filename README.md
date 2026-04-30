@@ -32,8 +32,10 @@ Qayra addresses this by making the Quran part of the note-taking process.
 - ✍️ Write notes with `@verse` mentions (e.g. `@2:153`)
 - 🔗 Connect thoughts directly to Quran verses  
 - 📖 Browse the Quran and view related notes  
-- 📊 Track learning activity with a GitHub-style heatmap  
+- 📊 Track learning activity with a GitHub-style heatmap
 - 📈 Measure progress across chapters and verses  
+- 🔐 Connect Quran Foundation account for cross-app sync
+- 📅 Persistent login — connect once, stay connected
 
 ---
 
@@ -62,7 +64,8 @@ Qayra encourages a shift from passive reading to active engagement:
 - Nuxt UI, Nuxt Icon  
 - Nitro server  
 - Supabase (PostgreSQL + Auth)  
-- Quran Foundation APIs  
+- TipTap (rich text editor)  
+- Quran Foundation APIs (OAuth2 PKCE)
 
 ---
 
@@ -73,30 +76,50 @@ Qayra uses Quran Foundation APIs as the source of truth for Quran content and ac
 ### Content APIs
 - Chapters, verses, translations, tafsir  
 - Verse search  
+- Chapter-by-chapter verse listing with previews
 
-### User APIs
+### User APIs (OAuth2 + PKCE)
+- Full OAuth2 Authorization Code flow with PKCE
+- Auto-restore session from Supabase on page load
 - Record Quran reading activity  
 - Record learning activity (notes/reflections)  
 - Support progress tracking (heatmap, active days)  
+- Disconnect with token revocation
 
----
-
-## How Qayra Uses the APIs
-
-- Fetches Quran data dynamically  
-- Links verses to user notes  
-- Records user activity (reading + learning)  
-- Keeps user notes stored locally (Supabase)  
+### Connected Features
+- One-time QF account connection — persists across logins
+- Unified activity calendar combining local notes + QF reading sessions
+- Clickable verse mentions in activity list
+- Auto-sync reading activity to QF on note creation and verse viewing
 
 ---
 
 ## Features
 
-- Note-taking with `@verse` mentions  
-- Verse detail pages (Arabic, translation, tafsir)  
-- Activity calendar (heatmap)  
-- Chapter progress overview  
-- Full-text search  
+### Notes
+- Rich text editor (TipTap) with bold, italic, headings, lists, quotes
+- `@verse` mention system with chapter/verse picker and Arabic + translation preview
+- Keyboard navigation (↑/↓ arrows + Enter to select)
+- Verse chips render as styled badges that navigate to verse detail
+- Full-text search via Postgres FTS
+
+### Quran Reader
+- Browse by chapter grid
+- Verse detail pages with Arabic, translation, tafsir
+- Related verses from topics and same chapter
+- Fallback verse data for first 10 verses
+- Auto-log reading activity to QF
+
+### Statistics & Activity
+- Combined activity calendar (notes + reading sessions)
+- Stats cards: Notes, Reading Sessions, Active Days, Completion %
+- Recent activity list with clickable verse references and note links
+- Chapter overview with progress bars
+
+### Authentication
+- Supabase magic link auth
+- QF OAuth2 PKCE integration with Supabase persistence
+- Auto-restore QF session from stored refresh tokens
 
 ---
 
@@ -104,21 +127,30 @@ Qayra uses Quran Foundation APIs as the source of truth for Quran content and ac
 
 ### Install
 
-```
+```bash
 npm install
 ```
 
 ### Configure
 
-```
+```bash
 cp .env.example .env
 ```
 
 Fill environment variables for Supabase and Quran Foundation.
 
+### Database
+
+Run migrations in Supabase Dashboard SQL Editor:
+
+1. `supabase/migrations/20260414000000_notes.sql`
+2. `supabase/migrations/20260414001000_disable_rls_for_testing.sql` (optional)
+3. `supabase/migrations/20260414002000_sources_and_speakers.sql`
+4. `supabase/migrations/20260421000000_qf_connections.sql` (QF OAuth persistence)
+
 ### Run
 
-```
+```bash
 npm run dev
 ```
 

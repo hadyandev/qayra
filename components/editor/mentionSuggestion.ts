@@ -11,6 +11,13 @@ interface Chapter {
   transliteration?: string
 }
 
+interface VersePreview {
+  key: string
+  text: string
+  translation: string
+}
+
+const versePreviewCache = new Map<string, VersePreview[]>()
 let chaptersCache: Chapter[] = []
 let cacheTime = 0
 const CACHE_DURATION = 60000
@@ -32,6 +39,26 @@ async function loadChapters(): Promise<Chapter[]> {
   }
 }
 
+async function loadVersePreviews(chapterId: number): Promise<VersePreview[]> {
+  const cacheKey = `ch-${chapterId}`
+  if (versePreviewCache.has(cacheKey)) {
+    return versePreviewCache.get(cacheKey)!
+  }
+  
+  try {
+    const data = await $fetch<{ verses: VersePreview[]; error?: string }>(
+      `/api/quran/chapter-verses?chapterId=${chapterId}`
+    )
+    if (data.verses && data.verses.length > 0) {
+      versePreviewCache.set(cacheKey, data.verses)
+      return data.verses
+    }
+  } catch (e) {
+    console.error(`Failed to load verse previews for chapter ${chapterId}:`, e)
+  }
+  return []
+}
+
 export default {
   items: async ({ query }: { query: string }) => {
     const chapters = await loadChapters()
@@ -47,11 +74,16 @@ export default {
       if (!isNaN(chapterNum) && chapterNum >= 1 && chapterNum <= 114) {
         const chapter = chapters.find(c => c.id === chapterNum)
         if (chapter) {
-          return Array.from({ length: chapter.verse_count }, (_, i) => ({
+          const previews = await loadVersePreviews(chapterNum)
+          const items = Array.from({ length: chapter.verse_count }, (_, i) => ({
             chapter_id: chapterNum,
             verse_number: i + 1,
-            key: `${chapterNum}:${i + 1}`
+            key: `${chapterNum}:${i + 1}`,
+            text: previews[i]?.text || '',
+            translation: previews[i]?.translation || '',
+            chapter_name: chapter.name_simple
           }))
+          return items
         }
       }
       return []
@@ -63,10 +95,14 @@ export default {
       if (!isNaN(chapterNum) && chapterNum >= 1 && chapterNum <= 114) {
         const chapter = chapters.find(c => c.id === chapterNum)
         if (chapter) {
+          const previews = await loadVersePreviews(chapterNum)
           const verses = Array.from({ length: chapter.verse_count }, (_, i) => ({
             chapter_id: chapterNum,
             verse_number: i + 1,
-            key: `${chapterNum}:${i + 1}`
+            key: `${chapterNum}:${i + 1}`,
+            text: previews[i]?.text || '',
+            translation: previews[i]?.translation || '',
+            chapter_name: chapter.name_simple
           }))
           if (versePart) {
             return verses.filter(v => v.key.split(':')[1].startsWith(versePart.toLowerCase())).slice(0, 10)

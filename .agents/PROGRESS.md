@@ -142,6 +142,31 @@ Returns activity with ranges:
 - QF User APIs require user OAuth token (not client_credentials)
 - Refresh tokens are simple base64 (for now)
 
+## Mention System Improvements (2026-05-01)
+
+### Keyboard Navigation
+- **Arrow keys (↑/↓)** navigate through the dropdown list
+- **Enter** selects the highlighted item — no need to click
+- **Escape** closes the dropdown
+- Fixed: search input now properly delegates keyboard events to navigation handler
+
+### Verse Preview in Dropdown
+- When selecting a verse, the dropdown shows **Arabic text + English translation**
+- Arabic text is right-aligned with proper line-height
+- English translation shown below, truncated to one line
+- Fallback: "Verse N" if API text not yet loaded
+- Chapter name shown in dropdown header (e.g., "Verse · Al-Baqarah")
+
+### Verse Insertion Format
+- Selecting a verse inserts `@2:255 => ""` with cursor placed **between the quotes**
+- Ready for immediate typing of reflection
+- Placeholder updated to show: `@1:1 => ""`
+
+### New Endpoint
+- `GET /api/quran/chapter-verses?chapterId=N` — fetches Arabic + translation for all verses in a chapter
+- Cached for 5 minutes server-side
+- Verse preview cache maintained in mention suggestion module
+
 ## Note on @quranjs/api
 
 The published npm `@quranjs/api` targets **quran.com** REST. The app uses **direct QF HTTP** in `server/utils/qfHttp.ts` for hackathon alignment; swap if QF ships a matching SDK on npm.

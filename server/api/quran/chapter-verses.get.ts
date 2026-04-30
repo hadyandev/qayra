@@ -1,62 +1,59 @@
 import { getQuery } from 'h3'
 import { qfFetchJson } from '../../utils/qfHttp'
 
+interface VersePreview {
+  key: string
+  text: string
+  translation: string
+}
+
+const cache = new Map<string, { data: VersePreview[]; time: number }>()
+const CACHE_DURATION = 60000 * 5 // 5 minutes
+
 export default defineEventHandler(async (event) => {
-  const { chapter, limit = 10, offset = 0, exclude } = getQuery(event) as {
-    chapter?: string
-    limit?: string | number
-    offset?: string | number
-    exclude?: string
+  const chapterId = parseInt(getQuery(event).chapterId as string)
+
+  if (!chapterId || chapterId < 1 || chapterId > 114) {
+    return { verses: [], error: 'Invalid chapter' }
   }
 
-  if (!chapter) {
-    return { verses: [], error: 'Chapter is required' }
+  const cacheKey = `chapter-${chapterId}`
+  const cached = cache.get(cacheKey)
+  if (cached && Date.now() - cached.time < CACHE_DURATION) {
+    return { verses: cached.data, error: null }
   }
-
-  const config = useRuntimeConfig()
-  const translationIds = (config.qfTranslationIds as string) || '85'
-  const numLimit = Math.min(Number(limit) || 10, 50)
-  const numOffset = Number(offset) || 0
 
   try {
-    const path = `/content/api/v4/verses/by_chapter/${encodeURIComponent(chapter)}`
     const data = await qfFetchJson<{
       verses?: Record<string, unknown>[]
     }>(
-      path,
+      `/content/api/v4/verses/by_chapter/${chapterId}`,
       {
-        translations: translationIds,
-        fields: 'verse_key,text_uthmani,translations',
-        from: numOffset + 1,
-        to: numOffset + numLimit
+        translations: '85',
+        fields: 'verse_key,text_uthmani,translations'
       },
       'content'
     )
 
-    let verses = (data.verses || []) as Record<string, unknown>[]
+    const list = data.verses || []
+    const verses: VersePreview[] = list.map((v: Record<string, unknown>) => {
+      const translationsRaw = (v.translations as Record<string, unknown>[]) || []
+      const translation = translationsRaw.length > 0
+        ? String(translationsRaw[0].text ?? '').replace(/<[^>]*>/g, '')
+        : ''
 
-    if (exclude) {
-      verses = verses.filter((v) => v.verse_key !== exclude)
-    }
+      return {
+        key: String(v.verse_key || ''),
+        text: String(v.text_uthmani || ''),
+        translation
+      }
+    })
 
-    const formatted = verses.map((verse) => ({
-      verse_key: String(verse.verse_key ?? ''),
-      text_uthmani: String(verse.text_uthmani ?? ''),
-      translations: ((verse.translations as Record<string, unknown>[]) || []).map((t) => ({
-        text: String(t.text ?? ''),
-        resource_name: String(t.resource_name ?? '')
-      }))
-    }))
+    cache.set(cacheKey, { data: verses, time: Date.now() })
 
-    return {
-      verses: formatted,
-      error: null
-    }
+    return { verses, error: null }
   } catch (error: any) {
-    console.error('Chapter Verses API Error:', error?.message || error)
-    return {
-      verses: [],
-      error: error?.message || 'Failed to fetch chapter verses'
-    }
+    console.error(`[QF Chapter Verses] Error for chapter ${chapterId}:`, error?.message)
+    return { verses: [], error: error?.message || 'Failed to fetch verses' }
   }
 })

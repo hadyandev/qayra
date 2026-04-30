@@ -20,28 +20,42 @@
         type="text"
         :placeholder="isVerseMode ? 'Search verse number...' : 'Search chapter name or number...'"
         class="w-full px-3 py-1.5 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-        @keydown.stop
+        @keydown="handleSearchKeydown"
       />
     </div>
-    <div v-if="displayItems.length" class="flex flex-col py-1 max-h-60 overflow-y-auto overscroll-contain">
+    <div v-if="displayItems.length" class="flex flex-col py-1 max-h-72 overflow-y-auto overscroll-contain scroll-smooth">
       <button
         v-for="(item, index) in displayItems"
         :key="itemKey(item, index)"
-        class="w-full text-left px-4 py-2.5 text-sm transition-colors duration-100 ease-out focus:outline-none flex items-center gap-3"
+        class="w-full text-left px-4 py-2 text-sm transition-colors duration-100 ease-out focus:outline-none flex items-start gap-3"
         :class="{
-          'bg-amber-50 dark:bg-amber-900/30 text-stone-900 dark:text-white': index === selectedIndex,
+          'selected-item bg-amber-50 dark:bg-amber-900/30 text-stone-900 dark:text-white': index === selectedIndex,
           'text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50': index !== selectedIndex
         }"
         @click="selectItem(index)"
         @mouseenter="selectedIndex = index"
       >
-        <span class="font-mono text-amber-600 dark:text-amber-500 font-medium text-xs w-12 shrink-0">
+        <span class="font-mono text-amber-600 dark:text-amber-500 font-medium text-xs w-12 shrink-0 pt-0.5">
           {{ isVerseMode ? item.key : `${item.id}:` }}
         </span>
-        <span v-if="isVerseMode" class="text-xs text-stone-400">Verse {{ item.verse_number }}</span>
-        <span v-else class="flex-1 truncate text-left">{{ item.name_simple }}</span>
-        <span v-if="!isVerseMode && item.name_arabic" class="text-arabic text-lg text-stone-400 dark:text-stone-600">{{ item.name_arabic }}</span>
-        <span v-if="!isVerseMode" class="text-xs text-stone-400 shrink-0">({{ item.verse_count }})</span>
+        <div class="flex-1 min-w-0">
+          <template v-if="isVerseMode">
+            <p v-if="item.text" class="text-arabic text-right text-sm leading-relaxed text-stone-800 dark:text-stone-200 line-clamp-2">
+              {{ item.text }}
+            </p>
+            <p v-if="item.translation" class="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-1 leading-snug">
+              {{ item.translation }}
+            </p>
+            <span v-else class="text-xs text-stone-400">Verse {{ item.verse_number }}</span>
+          </template>
+          <template v-else>
+            <div class="flex items-center gap-3 w-full">
+              <span class="flex-1 truncate text-left">{{ item.name_simple }}</span>
+              <span v-if="item.name_arabic" class="text-arabic text-lg text-stone-400 dark:text-stone-600">{{ item.name_arabic }}</span>
+              <span class="text-xs text-stone-400 shrink-0">({{ item.verse_count }})</span>
+            </div>
+          </template>
+        </div>
       </button>
     </div>
     <div v-else class="px-4 py-6 text-sm text-stone-500 dark:text-stone-400 text-center">
@@ -65,6 +79,9 @@ interface VerseItem {
   chapter_id: number
   verse_number: number
   key: string
+  text?: string
+  translation?: string
+  chapter_name?: string
 }
 
 const props = defineProps<{
@@ -104,7 +121,10 @@ const isVerseMode = computed(() => {
 const chapterInfo = computed(() => {
   if (!isVerseMode.value || props.items.length === 0) return null
   const first = props.items[0] as VerseItem
-  return { name_simple: `Chapter ${first.chapter_id}` }
+  return { 
+    name_simple: (first as any).chapter_name || `Chapter ${first.chapter_id}`,
+    chapter_id: first.chapter_id
+  }
 })
 
 const itemKey = (item: ChapterItem | VerseItem, index: number): string => {
@@ -145,6 +165,43 @@ watch(searchQuery, () => {
   selectedIndex.value = 0
 })
 
+watch(selectedIndex, () => {
+  nextTick(() => {
+    const container = document.querySelector('.mention-list')
+    const selectedItem = container?.querySelector('.selected-item')
+    if (selectedItem) {
+      selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  })
+})
+
+const handleSearchKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    selectedIndex.value = (selectedIndex.value + displayItems.value.length - 1) % Math.max(displayItems.value.length, 1)
+    return
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    selectedIndex.value = (selectedIndex.value + 1) % Math.max(displayItems.value.length, 1)
+    return
+  }
+
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    if (displayItems.value.length > 0) {
+      selectItem(selectedIndex.value)
+    }
+    return
+  }
+
+  if (event.key === 'Escape') {
+    event.stopPropagation()
+    return
+  }
+}
+
 const onKeyDown = (event: KeyboardEvent) => {
   if (event.key === 'ArrowUp') {
     event.preventDefault()
@@ -164,6 +221,10 @@ const onKeyDown = (event: KeyboardEvent) => {
       selectItem(selectedIndex.value)
     }
     return true
+  }
+
+  if (event.key === 'Escape') {
+    return false
   }
 
   return false
