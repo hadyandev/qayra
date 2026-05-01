@@ -114,9 +114,9 @@ export default {
     }
 
     const chapterNum = parseInt(q)
-    if (!isNaN(chapterNum) && chapterNum >= 1 && chapterNum <= 114) {
+    if (!isNaN(chapterNum)) {
       return chapters.filter(c => 
-        c.id === chapterNum || c.name_simple.toLowerCase().includes(q.toLowerCase())
+        c.id.toString().startsWith(q) || c.name_simple.toLowerCase().includes(q.toLowerCase())
       ).slice(0, 10)
     }
 

@@ -63,6 +63,15 @@
   - [x] Tafsir expandable section (removed dropdown)
   - [x] Related verses with content
   - [x] CTA centering
+
+### Final Polish & Bug Fixes (2026-05-01)
+- [x] Inline VersePanel reading integrated into `/notes` list and Dashboard recent notes.
+- [x] Unified Search highlighing (Command Palette + Advanced Search note titles).
+- [x] Profile page display name save 404 fix.
+- [x] Dashboard greeting & VerseCard text fetching.
+- [x] Mentions support for chapters 11-114 fix.
+- [x] Automated Image Processing: Extracted generated AI logo using Node.js (`jimp`) to generate transparent light/dark mode variants (`logo-light.png`, `logo-dark.png`) and `favicon.png`.
+- [x] Logo UI Integration: Created `<Logo />` Vue component and integrated across navbar, login page, and `useHead` layout.
 - [x] Footer added to default layout
 - [x] Dashboard stats using heatmap API
 - [x] Hadith navigation commented out

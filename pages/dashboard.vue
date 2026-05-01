@@ -7,7 +7,7 @@
           <div>
             <p class="text-sm text-amber-600 dark:text-amber-500 font-medium mb-2">Assalamu'alaikum 👋</p>
             <h1 class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight mb-2">
-              Welcome back
+              Welcome back{{ profile?.display_name ? `, ${profile.display_name.split(' ')[0]}` : '' }}
             </h1>
             <p class="text-[#52525B] dark:text-stone-400">
               <span v-if="lastLogin">Last active: {{ lastLogin }}</span>
@@ -69,24 +69,47 @@
       </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Verse of the Day -->
-        <section class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-[2rem] p-8">
-          <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-4">
-            <UIcon name="i-heroicons-sparkles" class="w-5 h-5" />
-            <span class="text-sm font-medium uppercase tracking-wider">Verse of the Day</span>
-          </div>
-          <blockquote class="text-xl font-serif text-[#18181B] dark:text-stone-100 leading-relaxed mb-4">
-            "{{ featuredVerse?.text || 'Loading...' }}"
-          </blockquote>
-          <NuxtLink 
-            v-if="featuredVerse?.verseKey"
-            :to="`/verse/${featuredVerse.verseKey}`"
-            class="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors"
+        <!-- Verse of the Day & QF Banner -->
+        <div class="space-y-6">
+          <section class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
+            <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-4">
+              <UIcon name="i-heroicons-sparkles" class="w-5 h-5" />
+              <span class="text-sm font-medium uppercase tracking-wider">Verse of the Day</span>
+            </div>
+            
+            <div v-if="!featuredVerse" class="animate-pulse space-y-3">
+              <div class="h-4 bg-stone-100 dark:bg-stone-800 rounded w-3/4"></div>
+              <div class="h-4 bg-stone-100 dark:bg-stone-800 rounded w-1/2"></div>
+            </div>
+            <VerseCard 
+              v-else
+              :verse-key="featuredVerse.verseKey"
+              :text="featuredVerse.text"
+              :translation="featuredVerse.translation"
+              :interactive="true"
+              class="shadow-sm"
+            />
+          </section>
+
+          <!-- QF Connection CTA -->
+          <section 
+            v-if="!loadingQf && !qfConnection?.connected"
+            class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border border-amber-200/60 dark:border-amber-800/40 rounded-2xl p-6 relative overflow-hidden"
           >
-            <span class="font-mono">@{{ featuredVerse.verseKey }}</span>
-            <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
-          </NuxtLink>
-        </section>
+            <div class="absolute -right-12 -top-12 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl"></div>
+            <h3 class="text-lg font-medium text-[#18181B] dark:text-stone-100 mb-2 relative z-10">Connect Quran Foundation</h3>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mb-4 relative z-10">
+              Sync your reading history and track your daily streaks seamlessly across devices.
+            </p>
+            <NuxtLink 
+              to="/profile"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-[#18181B] dark:bg-amber-600 text-white text-sm font-medium rounded-full hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all shadow-sm relative z-10"
+            >
+              <UIcon name="i-heroicons-link" class="w-4 h-4" />
+              Connect Now
+            </NuxtLink>
+          </section>
+        </div>
 
         <!-- Recent Notes -->
         <section>
@@ -122,14 +145,15 @@
                     <span v-if="note.source">• {{ note.source }}</span>
                   </div>
                 </div>
-                <div v-if="note.verse_keys?.length" class="flex gap-1">
-                  <span 
+                <div v-if="note.verse_keys?.length" class="flex gap-1 relative z-10">
+                  <button 
                     v-for="vk in note.verse_keys.slice(0, 2)" 
                     :key="vk"
-                    class="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 rounded text-xs font-mono text-amber-600 dark:text-amber-400"
+                    class="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 rounded text-xs font-mono text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+                    @click.stop.prevent="selectedVerse = vk"
                   >
                     @{{ vk }}
-                  </span>
+                  </button>
                 </div>
               </div>
             </NuxtLink>
@@ -172,10 +196,12 @@
         </div>
       </section>
     </div>
+    <VersePanel v-if="selectedVerse" :verse-key="selectedVerse" @close="selectedVerse = null" />
   </div>
 </template>
 
 <script setup lang="ts">
+import VersePanel from '~/components/VersePanel.vue'
 definePageMeta({ layout: 'default' })
 
 const config = useRuntimeConfig()
@@ -188,6 +214,8 @@ if (!user.value) {
 
 const lastLogin = ref('')
 const loadingNotes = ref(true)
+const selectedVerse = ref<string | null>(null)
+const { connection: qfConnection, loading: loadingQf, fetchConnection } = useQfConnection()
 const recentNotes = ref<Array<{
   id: string
   title: string | null
@@ -222,7 +250,10 @@ const activityData = ref<{
 const featuredVerse = ref<{
   verseKey: string
   text: string
+  translation: string
 } | null>(null)
+
+const profile = ref<{ display_name?: string }>({})
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
@@ -284,7 +315,7 @@ async function loadFeaturedVerse() {
     // In prelive, only use chapters 1-2 to avoid production data
     const maxChapter = isPrelive.value ? 2 : 114
     const randomChapter = Math.floor(Math.random() * maxChapter) + 1
-    const { verses } = await $fetch<{ verses: Array<{ verse_key: string; translations?: Array<{ text: string }> }> }>(
+    const { verses } = await $fetch<{ verses: Array<{ verse_key: string; text_uthmani?: string; text?: string; translations?: Array<{ text: string }> }> }>(
       `/api/quran/chapter-verses?chapter=${randomChapter}&limit=1`
     )
     if (verses?.length) {
@@ -292,7 +323,8 @@ async function loadFeaturedVerse() {
       const translation = verse.translations?.[0]?.text || ''
       featuredVerse.value = {
         verseKey: verse.verse_key,
-        text: translation.length > 150 ? translation.slice(0, 150) + '...' : translation
+        text: verse.text_uthmani || verse.text || '',
+        translation: translation.length > 150 ? translation.slice(0, 150) + '...' : translation
       }
     }
   } catch (e) {
@@ -312,6 +344,17 @@ onMounted(async () => {
       minute: '2-digit'
     })
     
+    // Load profile
+    const supabase = useSupabaseClient()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (currentUser?.id) {
+      const { data } = await supabase.from('profiles').select('display_name').eq('id', currentUser.id).single()
+      if (data) {
+        profile.value = data
+      }
+    }
+    
+    fetchConnection()
     await Promise.all([loadDashboard(), loadFeaturedVerse()])
   }
 })

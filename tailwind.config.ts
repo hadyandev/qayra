@@ -1,0 +1,12 @@
+import type { Config } from 'tailwindcss'
+
+export default <Partial<Config>>{
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+      }
+    }
+  }
+}

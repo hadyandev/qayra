@@ -87,13 +87,23 @@
                     <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-stone-500 dark:text-stone-400" />
                   </div>
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-[#18181B] dark:text-stone-100 line-clamp-1">{{ note.title || 'Untitled Note' }}</p>
-                    <div class="flex items-center gap-2 mt-0.5">
-                      <span v-if="note.source" class="text-xs text-stone-500 dark:text-stone-400">{{ note.source }}</span>
-                      <span v-if="note.note_date" class="text-xs text-stone-400 dark:text-stone-500">{{ note.note_date }}</span>
+                    <p class="text-sm font-medium text-[#18181B] dark:text-stone-100 line-clamp-1" v-html="highlightMatch(note.title || 'Untitled Note')"></p>
+                    <p v-if="note.content" class="text-xs text-[#52525B] dark:text-stone-400 line-clamp-1 mt-0.5" v-html="highlightMatch(note.content)"></p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span v-if="note.source" class="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400 font-medium">{{ note.source }}</span>
+                      <span v-if="note.note_date" class="text-[10px] text-stone-400 dark:text-stone-500">{{ note.note_date }}</span>
                     </div>
                   </div>
                 </button>
+              </div>
+
+              <div v-if="!user && query" class="px-4 py-3 mt-2 border-t border-stone-100 dark:border-stone-800/50">
+                <div class="flex items-center justify-between">
+                  <p class="text-xs text-stone-500 dark:text-stone-400">Looking for your notes?</p>
+                  <NuxtLink to="/login" @click="close" class="text-xs font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 transition-colors">
+                    Sign in to search workspace &rarr;
+                  </NuxtLink>
+                </div>
               </div>
             </div>
           </div>
@@ -127,22 +137,36 @@ type VerseResult = {
 type NoteResult = {
   id: string
   title: string | null
-  source: string | null
+  content: string | null
   note_date: string | null
+  source: string | null
 }
 
+function stripHtml(html: string) {
+  if (!html) return ''
+  return html.replace(/<[^>]*>?/gm, '')
+}
+
+function highlightMatch(text: string) {
+  if (!text || !query.value) return stripHtml(text)
+  const cleanText = stripHtml(text)
+  const q = query.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${q})`, 'gi')
+  return cleanText.replace(regex, '<span class="bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 px-0.5 rounded">$1</span>')
+}
+
+const user = useSupabaseUser()
 const isOpen = ref(false)
 const query = ref('')
-const isLoading = ref(false)
-const selectedIndex = ref(0)
 const inputRef = ref<HTMLInputElement | null>(null)
+const selectedIndex = ref(0)
+const isLoading = ref(false)
+const chaptersData = ref<any[]>([])
 
 const results = reactive({
   verses: [] as VerseResult[],
   notes: [] as NoteResult[]
 })
-
-const user = useSupabaseUser()
 
 const shortcuts = computed(() => {
   const items = [
@@ -180,14 +204,46 @@ async function search() {
   isLoading.value = true
   selectedIndex.value = 0
 
-  try {
-    const verseRes = await $fetch<{ results: any[] }>('/api/quran/search', { q: query.value })
+  const verseRegex = /^@?(\d{1,3}):(\d{1,3})$/
+  const match = query.value.trim().match(verseRegex)
 
-    results.verses = (verseRes.results || []).slice(0, 5).map((r: any) => ({
+  try {
+    let versesList = []
+
+    if (match) {
+      const chapter = parseInt(match[1])
+      const verseStr = match[2]
+      if (chapter >= 1 && chapter <= 114) {
+        let surahName = `Chapter ${chapter}`
+        const ch = chaptersData.value.find((c: any) => c.id === chapter)
+        if (ch) {
+          surahName = ch.name_simple
+        }
+        versesList.push({
+          verseKey: `${chapter}:${verseStr}`,
+          text: 'Jump directly to this verse',
+          surahName: surahName
+        })
+      }
+    }
+
+    const verseRes = await $fetch<{ results: any[] }>('/api/quran/search', { q: query.value })
+    const fetchedVerses = (verseRes.results || []).slice(0, 5).map((r: any) => ({
       verseKey: r.verseKey || r.verse_key || '',
       text: r.text || r.translatedText || r.content || '',
       surahName: r.surahName || r.surah_name || ''
     }))
+
+    // Merge jump-to with fetched, deduplicating
+    const seen = new Set(versesList.map(v => v.verseKey))
+    for (const fv of fetchedVerses) {
+      if (!seen.has(fv.verseKey)) {
+        versesList.push(fv)
+        seen.add(fv.verseKey)
+      }
+    }
+
+    results.verses = versesList.slice(0, 5)
 
     if (user.value) {
       try {
@@ -242,7 +298,12 @@ watch(query, () => {
   debounceTimer = setTimeout(search, 200)
 })
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const res = await $fetch<{chapters: any[]}>('/api/chapters')
+    chaptersData.value = res.chapters || []
+  } catch(e) {}
+
   const handler = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault()

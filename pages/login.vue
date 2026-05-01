@@ -3,9 +3,7 @@
     <div class="w-full max-w-md">
       <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-[2rem] p-8 md:p-10 ring-1 ring-stone-200/30 dark:ring-stone-800/30">
         <header class="text-center mb-10">
-          <div class="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-4">
-            <UIcon name="i-heroicons-book-open" class="w-6 h-6 text-[#52525B] dark:text-stone-400" />
-          </div>
+          <Logo size="xl" :icon-only="true" class="justify-center mb-6" />
           <h1 class="text-3xl font-light text-[#18181B] dark:text-stone-100 tracking-tight mb-2">
             Welcome to Qayra
           </h1>

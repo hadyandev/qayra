@@ -167,38 +167,25 @@
               Related Verses
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-<template v-if="relatedByTopic.length > 0">
-                <NuxtLink 
+              <template v-if="relatedByTopic.length > 0">
+                <VerseCard
                   v-for="v in relatedByTopic.slice(0, 4)"
                   :key="v.verse_key"
-                  :to="`/verse/${v.verse_key}`"
-                  class="group p-4 bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/40 dark:border-amber-800/40 rounded-xl hover:border-amber-300 dark:hover:border-amber-700/50 transition-colors"
-                >
-                  <div class="flex items-start gap-3">
-                    <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/50 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-xs text-amber-500 dark:text-amber-400 mb-1">{{ v.topic }}</p>
-                      <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
-                        {{ v.translation?.slice(0, 80) || v.text?.slice(0, 80) || 'Tap to view' }}
-                      </p>
-                    </div>
-                  </div>
-                </NuxtLink>
+                  :verse-key="v.verse_key"
+                  :topic="v.topic"
+                  :translation="v.translation?.slice(0, 80) || v.text?.slice(0, 80)"
+                  :interactive="true"
+                  :highlight="true"
+                />
               </template>
               <template v-else-if="relatedVerses.length > 0">
-                <NuxtLink 
+                <VerseCard
                   v-for="v in relatedVerses.slice(0, 4)"
                   :key="v.verse_key"
-                  :to="`/verse/${v.verse_key}`"
-                  class="group p-4 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-xl hover:border-amber-200/60 dark:hover:border-amber-700/50 transition-colors"
-                >
-                  <div class="flex items-start gap-3">
-                    <span class="font-mono text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded shrink-0">@{{ v.verse_key }}</span>
-                    <p class="text-sm text-[#52525B] dark:text-stone-400 line-clamp-2 group-hover:text-[#18181B] dark:group-hover:text-stone-200 transition-colors">
-                      {{ v.translation?.slice(0, 80) || v.text?.slice(0, 80) }}
-                    </p>
-                  </div>
-                </NuxtLink>
+                  :verse-key="v.verse_key"
+                  :translation="v.translation?.slice(0, 80) || v.text?.slice(0, 80)"
+                  :interactive="true"
+                />
               </template>
             </div>
           </div>

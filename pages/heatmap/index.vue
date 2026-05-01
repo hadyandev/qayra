@@ -67,6 +67,22 @@
           </div>
         </div>
 
+        <div v-if="!qfAuthenticated" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border border-amber-200/60 dark:border-amber-800/40 rounded-2xl p-8 mb-8 text-center flex flex-col items-center justify-center relative overflow-hidden">
+          <div class="absolute -right-12 -top-12 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl"></div>
+          <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-orange-400/20 rounded-full blur-3xl"></div>
+          
+          <div class="w-16 h-16 rounded-2xl bg-white/80 dark:bg-stone-900/80 backdrop-blur border border-amber-100 dark:border-amber-800/50 flex items-center justify-center mb-4 z-10">
+            <UIcon name="i-heroicons-link" class="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 class="text-xl font-semibold text-[#18181B] dark:text-stone-100 mb-2 z-10">Connect your Quran Foundation account</h2>
+          <p class="text-stone-500 dark:text-stone-400 max-w-md mb-6 z-10">
+            Track your reading sessions, build your streaks, and sync your progress seamlessly across your devices.
+          </p>
+          <NuxtLink to="/profile" class="px-6 py-2.5 bg-[#18181B] dark:bg-amber-600 text-white font-medium rounded-full hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-amber-900/20 z-10">
+            Connect QF Account
+          </NuxtLink>
+        </div>
+
         <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6 mb-8">
           <div class="flex items-center justify-between gap-4 mb-6">
             <div>
@@ -351,6 +367,7 @@ const combinedData = ref({
 })
 const loading = ref(true)
 const selectedDay = ref<ActivityDay | null>(null)
+const qfAuthenticated = ref(true)
 
 const totalVerses = 6236
 
@@ -638,6 +655,9 @@ onMounted(async () => {
     
     const readingsByDate: Record<string, number> = {}
     const readingList: Array<{ date: string; ranges?: string[] }> = []
+    
+    qfAuthenticated.value = qfActivityRes.authenticated
+    
     if (qfActivityRes.authenticated && qfActivityRes.activities) {
       for (const activity of qfActivityRes.activities) {
         readingsByDate[activity.date] = (readingsByDate[activity.date] || 0) + 1

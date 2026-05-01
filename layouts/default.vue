@@ -4,7 +4,7 @@
       <nav class="max-w-5xl mx-auto bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border border-stone-200/60 dark:border-stone-800/60 rounded-[1.25rem] px-2 py-1.5 shadow-sm ring-1 ring-stone-200/30 dark:ring-stone-800/30 transition-all duration-300">
         <div class="flex items-center justify-between gap-2">
           <NuxtLink to="/" class="flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 hover:bg-stone-100 dark:hover:bg-stone-800 group">
-            <span class="text-lg font-semibold text-[#18181B] dark:text-stone-100 tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">Qayra</span>
+            <Logo size="md" />
           </NuxtLink>
           
           <!-- Right side: Nav Links + Search + Theme + User -->
@@ -99,9 +99,17 @@
                   </div>
 
                   <div class="py-1">
+                    <NuxtLink 
+                      to="/profile"
+                      class="flex items-center gap-3 px-4 py-2 text-sm text-[#18181B] dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors"
+                      @click="showUserMenu = false"
+                    >
+                      <UIcon name="i-heroicons-user" class="w-4 h-4 text-stone-500" />
+                      Profile & Settings
+                    </NuxtLink>
                     <button 
                       @click="signOut"
-                      class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4" />
                       Sign out

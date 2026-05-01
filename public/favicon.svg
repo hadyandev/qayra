@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .primary { fill: #18181B; }
+    .accent { fill: #D97706; }
+    @media (prefers-color-scheme: dark) {
+      .primary { fill: #FAF9F6; }
+      .accent { fill: #F59E0B; }
+    }
+  </style>
+  
+  <!-- Abstract Book Pages / Ribbons -->
+  <path class="primary" d="M 20 70 C 20 40, 45 25, 45 25 C 45 25, 30 50, 40 80 Z" />
+  <path class="primary" d="M 80 70 C 80 40, 55 25, 55 25 C 55 25, 70 50, 60 80 Z" />
+  
+  <!-- Central geometric quill / pointer -->
+  <path class="accent" d="M 50 15 L 58 45 L 50 85 L 42 45 Z" />
+  
+  <!-- Top Islamic geometric star/dot -->
+  <polygon class="accent" points="50,5 52,10 57,10 53,13 55,18 50,15 45,18 47,13 43,10 48,10" />
+</svg>

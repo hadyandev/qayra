@@ -161,11 +161,37 @@ Returns activity with ranges:
 - Selecting a verse inserts `@2:255 => ""` with cursor placed **between the quotes**
 - Ready for immediate typing of reflection
 - Placeholder updated to show: `@1:1 => ""`
+- Fixed logic to support mentions for chapters 11-114 properly.
 
 ### New Endpoint
 - `GET /api/quran/chapter-verses?chapterId=N` — fetches Arabic + translation for all verses in a chapter
 - Cached for 5 minutes server-side
 - Verse preview cache maintained in mention suggestion module
+
+## Final Polish & UX Improvements (2026-05-01)
+
+### VersePanel Integration
+- Integrated inline `VersePanel` reading into `/notes` list and Dashboard recent notes. Clicking an `@verse` chip smoothly opens the sliding panel instead of navigating away.
+- VersePanel displays Arabic text, translation, and Tafsir beautifully with the Surah name.
+
+### Search Highlighting
+- Unified Search in Command Palette highlights search keywords in both note titles and content snippets.
+- Advanced Search on the `/notes` page highlights search keywords in note titles.
+- Jump to verse in Command Palette now displays full Surah names (e.g., "Al-Baqarah") alongside chapter numbers.
+
+### Profile & Dashboard
+- Fixed Profile page save functionality (reliably fetching User ID from session and handling upserts).
+- Dashboard greeting fetches the user's display name.
+- Dashboard "Verse of the Day" fully fetches Arabic text and English translation to populate the `VerseCard` correctly.
+
+### App Branding & Logo Processing
+- Processed the raw AI-generated Qayra logo using a custom Node.js `jimp` script (`image-processor/process.js`).
+- Extracted transparent versions for dynamic UI integration:
+  - `logo-light.png`: White background removed for seamless light mode support.
+  - `logo-dark.png`: Charcoal colors intelligently inverted to off-white, while preserving the amber/golden accent colors.
+  - `favicon.png`: Scaled down 32x32 variant.
+- Built a Vue component (`components/Logo.vue`) to effortlessly handle dark/light mode switching using Tailwind classes (`dark:block`, `dark:hidden`).
+- Logo implemented fully across the application: Top Navigation Bar (`layouts/default.vue`), Login Page (`pages/login.vue`), and document `useHead` (`app.vue`).
 
 ## Note on @quranjs/api
 

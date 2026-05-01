@@ -98,15 +98,15 @@
           <div v-if="verse_keys.length" class="bg-stone-50/50 dark:bg-stone-800/30 border border-stone-200/60 dark:border-stone-700/60 rounded-[1.5rem] p-6">
             <h3 class="text-sm font-medium text-[#18181B] dark:text-stone-200 mb-4">Referenced Verses</h3>
             <div class="flex flex-wrap gap-3">
-              <NuxtLink 
+              <button 
                 v-for="vk in verse_keys" 
                 :key="vk"
-                :to="`/verse/${vk}`"
+                @click="openVersePanel(vk)"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
               >
                 <span class="font-mono text-amber-600 dark:text-amber-500">@{{ vk }}</span>
-                <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-4 h-4 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </NuxtLink>
+                <UIcon name="i-heroicons-arrows-pointing-out" class="w-4 h-4 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
             </div>
           </div>
 
@@ -128,27 +128,27 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="space-y-1.5">
                 <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Source</label>
-                <input 
-                  v-model="form.source" 
+                <USelectMenu
+                  v-model="form.source"
+                  :options="sourceOptions"
+                  creatable
                   placeholder="e.g., kajian, khutbah, podcast"
-                  list="sources-list"
-                  class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
+                  class="w-full"
+                  size="xl"
+                  :ui="{ padding: { xl: 'px-4 py-3' }, rounded: 'rounded-xl', color: { white: { outline: 'shadow-none bg-stone-50/50 dark:bg-stone-800/50 border-stone-200/60 dark:border-stone-700/60 focus:ring-amber-500/30 text-[#18181B] dark:text-stone-100 placeholder-stone-400' } } }"
                 />
-                <datalist id="sources-list">
-                  <option value="Kajian" />
-                  <option value="Khutbah" />
-                  <option value="Podcast" />
-                  <option value="Book" />
-                  <option value="Personal Study" />
-                </datalist>
               </div>
 
               <div class="space-y-1.5">
                 <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Speaker / Author</label>
-                <input 
-                  v-model="form.speaker" 
+                <USelectMenu
+                  v-model="form.speaker"
+                  :options="speakerOptions"
+                  creatable
                   placeholder="e.g., Ustadz Hanan Attaki"
-                  class="w-full px-4 py-3 bg-stone-50/50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl text-[#18181B] dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
+                  class="w-full"
+                  size="xl"
+                  :ui="{ padding: { xl: 'px-4 py-3' }, rounded: 'rounded-xl', color: { white: { outline: 'shadow-none bg-stone-50/50 dark:bg-stone-800/50 border-stone-200/60 dark:border-stone-700/60 focus:ring-amber-500/30 text-[#18181B] dark:text-stone-100 placeholder-stone-400' } } }"
                 />
               </div>
             </div>
@@ -210,6 +210,12 @@
       <p class="text-[#52525B] dark:text-stone-400 mb-6">This note may have been deleted or doesn't exist.</p>
       <NuxtLink to="/notes" class="text-amber-600 dark:text-amber-500 font-medium hover:text-amber-700 transition-colors">Back to notes &rarr;</NuxtLink>
     </div>
+
+    <VersePanel 
+      v-if="selectedVerseKey"
+      :verse-key="selectedVerseKey"
+      @close="selectedVerseKey = null"
+    />
   </div>
 </template>
 
@@ -253,12 +259,27 @@ const form = reactive({
   note_date: ''
 })
 const tagsRaw = ref('')
+const selectedVerseKey = ref<string | null>(null)
+
+const sourceOptions = computed(() => {
+  const defaults = ['Kajian', 'Khutbah', 'Podcast', 'Book', 'Personal Study']
+  const existing = sources.value.map(s => s.name)
+  return Array.from(new Set([...defaults, ...existing]))
+})
+
+const speakerOptions = computed(() => {
+  return speakers.value.map(s => s.name)
+})
+
+function openVersePanel(vk: string) {
+  selectedVerseKey.value = vk
+}
 
 const renderedContent = computed(() => {
   if (!note.value?.content) return ''
   let html = note.value.content
-  // Convert verse mentions to links
-  html = html.replace(/@(\d+:\d+)/g, '<a href="/verse/$1" class="mention text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-md font-mono text-sm border-b-2 border-amber-200 dark:border-amber-700/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors no-underline">@$1</a>')
+  // Convert verse mentions to buttons that trigger the side panel
+  html = html.replace(/@(\d+:\d+)/g, '<button data-verse-key="$1" class="verse-mention mention text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-md font-mono text-sm border-b-2 border-amber-200 dark:border-amber-700/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors no-underline inline-block">@$1</button>')
   return html
 })
 
@@ -266,6 +287,17 @@ function formatDate(noteDate: string | null, created: string) {
   if (noteDate) return noteDate
   return new Date(created).toLocaleDateString()
 }
+
+onMounted(() => {
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    const button = target.closest('button.verse-mention') as HTMLButtonElement
+    if (button && button.dataset.verseKey) {
+      e.preventDefault()
+      openVersePanel(button.dataset.verseKey)
+    }
+  })
+})
 
 async function load() {
   loading.value = true

@@ -138,21 +138,19 @@
             </div>
 
             <!-- Title -->
-            <h2 class="text-2xl md:text-3xl font-medium text-[#18181B] dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
-              {{ n.title || 'Untitled Reflection' }}
+            <h2 class="text-2xl md:text-3xl font-medium text-[#18181B] dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors" v-html="highlightMatch(n.title)">
             </h2>
 
             <!-- Verse References -->
-            <div v-if="n.verse_keys?.length" class="flex flex-wrap gap-2">
-              <NuxtLink 
+            <div v-if="n.verse_keys?.length" class="flex flex-wrap gap-2 relative z-10">
+              <button 
                 v-for="vk in n.verse_keys.slice(0, 5)" 
                 :key="vk"
-                :to="`/verse/${vk}`"
                 class="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/50 rounded-full text-sm font-mono text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
-                @click.stop
+                @click.stop.prevent="selectedVerse = vk"
               >
                 @{{ vk }}
-              </NuxtLink>
+              </button>
               <span v-if="n.verse_keys.length > 5" class="px-2 py-1 text-sm text-stone-400">
                 +{{ n.verse_keys.length - 5 }} more
               </span>
@@ -175,10 +173,12 @@
         </article>
       </div>
     </main>
+    <VersePanel v-if="selectedVerse" :verse-key="selectedVerse" @close="selectedVerse = null" />
   </div>
 </template>
 
 <script setup lang="ts">
+import VersePanel from '~/components/VersePanel.vue'
 definePageMeta({ layout: 'default' })
 
 const user = useSupabaseUser()
@@ -201,6 +201,7 @@ const notes = ref<NoteRow[]>([])
 const allNotes = ref<NoteRow[]>([])
 const pending = ref(true)
 const error = ref('')
+const selectedVerse = ref<string | null>(null)
 const filters = reactive({
   q: '',
   tag: '',
@@ -237,6 +238,14 @@ const hasActiveFilters = computed(() => {
 function formatDate(noteDate: string | null, created: string) {
   if (noteDate) return noteDate
   return new Date(created).toLocaleDateString()
+}
+
+function highlightMatch(text: string | null) {
+  if (!text) return 'Untitled Reflection'
+  if (!filters.q.trim()) return text
+  const q = filters.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${q})`, 'gi')
+  return text.replace(regex, '<span class="bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 px-0.5 rounded">$1</span>')
 }
 
 async function load() {
