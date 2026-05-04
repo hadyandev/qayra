@@ -22,13 +22,17 @@ const QF_CONFIG_MAP = {
   }
 } as const
 
+function getUserEnv(): 'prelive' | 'production' {
+  const env = process.env.QF_ENV || 'prelive'
+  return (env === 'production' || env === 'live') ? 'production' : 'prelive'
+}
+
 /**
  * Get Quran Foundation OAuth2 configuration
  * 
- * Reads from environment:
- * - QF_CLIENT_ID (required)
- * - QF_CLIENT_SECRET (optional - only for confidential clients)
- * - QF_ENV (optional): "prelive" | "production" (default: "prelive")
+ * Uses QF_CLIENT_ID / QF_CLIENT_SECRET for User API OAuth.
+ * Content API uses separate QF_CONTENT_CLIENT_ID / QF_CONTENT_CLIENT_SECRET
+ * configured in qfHttp.ts.
  * 
  * @throws Error if QF_CLIENT_ID is missing
  */
@@ -45,8 +49,7 @@ export function getQfOAuthConfig(): QfOAuthConfig {
     )
   }
 
-  const env = (process.env.QF_ENV === 'production' || process.env.QF_ENV === 'live' ? 'production' : 'prelive') as 'prelive' | 'production'
-  
+  const env = getUserEnv()
   const envConfig = QF_CONFIG_MAP[env]
   const isPublicClient = !clientSecret
 
@@ -62,25 +65,14 @@ export function getQfOAuthConfig(): QfOAuthConfig {
   }
 }
 
-/**
- * Check if currently using prelive environment
- */
 export function isPrelive(): boolean {
-  return process.env.QF_ENV !== 'production' && process.env.QF_ENV !== 'live'
+  return getUserEnv() === 'prelive'
 }
 
-/**
- * Get environment key for isolation purposes
- * Returns 'prelive' or 'production' - used for cookie/session prefixes
- */
 export function getQfEnvKey(): 'prelive' | 'production' {
-  return process.env.QF_ENV === 'production' || process.env.QF_ENV === 'live' ? 'production' : 'prelive'
+  return getUserEnv()
 }
 
-/**
- * Validate QF credentials are configured
- * Returns undefined if valid, error message if invalid
- */
 export function validateQfCredentials(): string | undefined {
   const clientId = process.env.QF_CLIENT_ID
   if (!clientId) {

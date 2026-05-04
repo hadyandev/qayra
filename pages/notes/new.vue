@@ -103,7 +103,7 @@
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-[#18181B] dark:text-stone-200">Content <span class="text-red-500">*</span></label>
           <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-[1.5rem] overflow-hidden ring-1 ring-stone-200/30 dark:ring-stone-800/30">
-            <NoteEditor v-model="form.content" />
+            <NoteEditor ref="noteEditor" v-model="form.content" />
           </div>
           <p class="text-xs text-[#52525B] dark:text-stone-500 mt-1">
             Tip: Type @ to search for verses (e.g., @2:153)
@@ -182,13 +182,28 @@ const form = reactive({
 const tagsRaw = ref('')
 const saving = ref(false)
 const err = ref('')
+const noteEditor = ref<InstanceType<typeof import('~/components/NoteEditor.vue').default> | null>(null)
 
 onMounted(async () => {
   await Promise.all([fetchSources(), fetchSpeakers()])
   
   const v = route.query.verse as string | undefined
   if (v) {
-    form.content = `<p>@${v} => "</p><p></p><p></p>`
+    form.content = `<p>@${v} => ""</p><p></p><p></p>`
+    await nextTick()
+    setTimeout(() => {
+      const editor = noteEditor.value?.getEditor()
+      if (editor) {
+        const firstPara = editor.state.doc.firstChild
+        if (firstPara) {
+          const textContent = firstPara.textContent || ''
+          const quotePos = textContent.indexOf('"')
+          if (quotePos >= 0) {
+            editor.chain().focus().setTextSelection(firstPara.pos + quotePos + 1).run()
+          }
+        }
+      }
+    }, 100)
   }
 })
 

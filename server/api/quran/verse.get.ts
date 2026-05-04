@@ -1,10 +1,6 @@
 import { getQuery } from 'h3'
 import { qfFetchJson } from '../../utils/qfHttp'
-
-const surahInfo: Record<number, { name_simple: string; name_complex: string; name_arabic: string; verses_count: number; revelation_place: string }> = {
-  1: { name_simple: 'Al-Fatihah', name_complex: 'Al-Fātihah', name_arabic: 'ٱلْفَاتِحَة', verses_count: 7, revelation_place: 'Mecca' },
-  2: { name_simple: 'Al-Baqarah', name_complex: 'Al-Baqarah', name_arabic: 'ٱلْبَقَرَة', verses_count: 286, revelation_place: 'Medina' }
-}
+import { serverSupabaseClient } from '#supabase/server'
 
 const fallbackVerses: Record<string, { text: string; translation: string }> = {
   '1:1': { text: 'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ', translation: 'In the name of God, the Most Gracious, the Most Merciful.' },
@@ -19,8 +15,27 @@ const fallbackVerses: Record<string, { text: string; translation: string }> = {
   '2:3': { text: 'الَّذِينَ يُؤْمِنُونَ بِالْغَيْبِ وَيُقِيمُونَ الصَّلاةَ وَمِمَّا رَزَقْنَاهُمْ يُنْفِقُونَ', translation: 'Who believe in the unseen and establish prayer, and from what We have provided them, they spend.' },
 }
 
-function getSurahInfo(chapterId: number) {
-  return surahInfo[chapterId] || null
+async function getChapterInfo(event: any, chapterId: number) {
+  try {
+    const client = await serverSupabaseClient(event)
+    const { data } = await client
+      .from('chapters')
+      .select('name_simple,name_complex,name_arabic,verse_count,chapter_type')
+      .eq('id', chapterId)
+      .single()
+    if (data) {
+      return {
+        name_simple: data.name_simple,
+        name_complex: data.name_complex,
+        name_arabic: data.name_arabic,
+        verses_count: data.verse_count,
+        revelation_place: data.chapter_type
+      }
+    }
+  } catch (e) {
+    console.warn('[verse.get] Failed to fetch chapter from Supabase:', e)
+  }
+  return null
 }
 
 function getFallbackVerse(key: string) {
@@ -61,12 +76,12 @@ export default defineEventHandler(async (event) => {
       return { error: 'Verse not found', verse: null }
     }
 
-    // Get chapter info from static map
-    const surah = getSurahInfo(chapterNum)
+    // Get chapter info from Supabase
+    const surah = await getChapterInfo(event, chapterNum)
     const chapterNameSimple = surah?.name_simple || 'Chapter ' + chapterNum
     const chapterNameComplex = surah?.name_complex || chapterNameSimple
     const chapterNameArabic = surah?.name_arabic || ''
-    const chapterVersesCount = surah?.verses_count || 0
+    const chapterVersesCount = surah?.verses_count || (chapterNum === 1 ? 7 : chapterNum === 2 ? 286 : 0)
     const revelationPlace = surah?.revelation_place || ''
 
     // Verse data from API

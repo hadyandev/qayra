@@ -1,18 +1,21 @@
 const qfEnv = process.env.QF_ENV || 'prelive'
 
+const contentApiBase = process.env.QF_CONTENT_API_BASE || 'https://apis-prelive.quran.foundation'
+const contentIsPrelive = contentApiBase.includes('prelive')
+const contentOAuthTokenUrl = contentIsPrelive
+  ? 'https://prelive-oauth2.quran.foundation/oauth2/token'
+  : 'https://oauth2.quran.foundation/oauth2/token'
+
 const qfConfigMap = {
   prelive: {
-    apiBase: 'https://apis-prelive.quran.foundation',
     userApiBase: 'https://apis-prelive.quran.foundation',
     oauthTokenUrl: 'https://prelive-oauth2.quran.foundation/oauth2/token'
   },
   production: {
-    apiBase: 'https://apis.quran.foundation',
     userApiBase: 'https://apis.quran.foundation',
     oauthTokenUrl: 'https://oauth2.quran.foundation/oauth2/token'
   },
   live: {
-    apiBase: 'https://apis.quran.foundation',
     userApiBase: 'https://apis.quran.foundation',
     oauthTokenUrl: 'https://oauth2.quran.foundation/oauth2/token'
   }
@@ -48,14 +51,17 @@ export default defineNuxtConfig({
   runtimeConfig: {
     qfClientId: process.env.QF_CLIENT_ID || process.env.QURAN_CLIENT_ID,
     qfClientSecret: process.env.QF_CLIENT_SECRET || process.env.QURAN_CLIENT_SECRET,
-    qfApiBase: process.env.QF_API_BASE || qfConfig.apiBase,
+    qfContentClientId: process.env.QF_CONTENT_CLIENT_ID || process.env.QF_CLIENT_ID,
+    qfContentClientSecret: process.env.QF_CONTENT_CLIENT_SECRET || process.env.QF_CLIENT_SECRET,
+    qfApiBase: contentApiBase,
+    qfContentOAuthTokenUrl: process.env.QF_CONTENT_OAUTH_TOKEN_URL || contentOAuthTokenUrl,
     qfUserApiBase: process.env.QF_USER_API_BASE || qfConfig.userApiBase,
     qfOAuthTokenUrl: process.env.QF_OAUTH_TOKEN_URL || qfConfig.oauthTokenUrl,
     qfOAuthRedirectUri: process.env.QF_OAUTH_REDIRECT_URI,
     qfOAuthScopes: process.env.QF_OAUTH_SCOPES,
     qfTranslationIds: process.env.QF_TRANSLATION_IDS || '85',
     public: {
-      qfBase: process.env.NUXT_PUBLIC_QF_BASE || qfConfig.apiBase,
+      qfBase: contentApiBase,
       qfEnv: process.env.QF_ENV || 'prelive'
     }
   }

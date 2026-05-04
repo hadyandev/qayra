@@ -257,6 +257,10 @@ watch(
   }
 )
 
+defineExpose({
+  getEditor: () => editor.value
+})
+
 onBeforeUnmount(() => {
   editor.value?.destroy()
 })

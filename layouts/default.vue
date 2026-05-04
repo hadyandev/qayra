@@ -22,7 +22,7 @@
             
             <!-- Search (Icon only) -->
             <button
-              @click="commandPalette?.open()"
+              @click="openCommandPalette()"
               class="p-2 rounded-full text-[#52525B] dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300"
               aria-label="Search (Cmd+K)"
             >
@@ -141,7 +141,7 @@
       </div>
     </footer>
 
-    <CommandPalette ref="commandPalette" />
+    <CommandPalette />
     <QfConnectModal 
       v-model="showQfModal" 
       :is-connected="qfConnection?.connected"
@@ -169,11 +169,13 @@
 </style>
 
 <script setup lang="ts">
+import { useCommandPalette } from '~/composables/useCommandPalette'
+
 const route = useRoute()
 const user = useSupabaseUser()
 const client = useSupabaseClient()
 const colorMode = useColorMode()
-const commandPalette = ref<{ open: () => void } | null>(null)
+const { open: openCommandPalette } = useCommandPalette()
 const showUserMenu = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
 const showQfModal = ref(false)

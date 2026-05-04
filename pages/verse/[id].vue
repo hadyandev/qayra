@@ -473,8 +473,7 @@ async function loadReflections() {
 async function loadRelatedVerses() {
   if (!chapter) return
   
-  // Get other verses from same chapter
-  const totalVerses = 7 // Al-Fatihah has 7 verses
+  const totalVerses = verseData.value?.total_verses || 7
   const verseNums = Array.from({ length: totalVerses }, (_, i) => i + 1).filter(n => n !== verseNum)
   const sampleVerses = verseNums.slice(0, 4)
   

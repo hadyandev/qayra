@@ -128,6 +128,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useCommandPalette } from '~/composables/useCommandPalette'
+
 type VerseResult = {
   verseKey: string
   text: string
@@ -156,8 +159,7 @@ function highlightMatch(text: string) {
 }
 
 const user = useSupabaseUser()
-const isOpen = ref(false)
-const query = ref('')
+const { isOpen, query, open, close, toggle, registerInputFocus } = useCommandPalette()
 const inputRef = ref<HTMLInputElement | null>(null)
 const selectedIndex = ref(0)
 const isLoading = ref(false)
@@ -181,19 +183,6 @@ const shortcuts = computed(() => {
   return items
 })
 
-function open() {
-  isOpen.value = true
-  query.value = ''
-  selectedIndex.value = 0
-  results.verses = []
-  results.notes = []
-  nextTick(() => inputRef.value?.focus())
-}
-
-function close() {
-  isOpen.value = false
-}
-
 async function search() {
   if (!query.value.trim()) {
     results.verses = []
@@ -208,7 +197,7 @@ async function search() {
   const match = query.value.trim().match(verseRegex)
 
   try {
-    let versesList = []
+    let versesList: VerseResult[] = []
 
     if (match) {
       const chapter = parseInt(match[1])
@@ -227,20 +216,23 @@ async function search() {
       }
     }
 
-    const verseRes = await $fetch<{ results: any[] }>('/api/quran/search', { q: query.value })
-    const fetchedVerses = (verseRes.results || []).slice(0, 5).map((r: any) => ({
-      verseKey: r.verseKey || r.verse_key || '',
-      text: r.text || r.translatedText || r.content || '',
-      surahName: r.surahName || r.surah_name || ''
-    }))
+    try {
+      const verseRes = await $fetch<{ results: any[] }>('/api/quran/search', { q: query.value })
+      const fetchedVerses = (verseRes.results || []).slice(0, 5).map((r: any) => ({
+        verseKey: r.verseKey || r.verse_key || '',
+        text: r.text || r.translatedText || r.content || '',
+        surahName: r.surahName || r.surah_name || ''
+      }))
 
-    // Merge jump-to with fetched, deduplicating
-    const seen = new Set(versesList.map(v => v.verseKey))
-    for (const fv of fetchedVerses) {
-      if (!seen.has(fv.verseKey)) {
-        versesList.push(fv)
-        seen.add(fv.verseKey)
+      const seen = new Set(versesList.map(v => v.verseKey))
+      for (const fv of fetchedVerses) {
+        if (!seen.has(fv.verseKey)) {
+          versesList.push(fv)
+          seen.add(fv.verseKey)
+        }
       }
+    } catch (e) {
+      console.warn('Search API error, keeping regex match:', e)
     }
 
     results.verses = versesList.slice(0, 5)
@@ -253,10 +245,6 @@ async function search() {
         results.notes = []
       }
     }
-  } catch (e) {
-    console.error('Search error:', e)
-    results.verses = []
-    results.notes = []
   } finally {
     isLoading.value = false
   }
@@ -264,11 +252,13 @@ async function search() {
 
 function navigateUp() {
   const total = results.verses.length + results.notes.length
+  if (total === 0) return
   selectedIndex.value = selectedIndex.value > 0 ? selectedIndex.value - 1 : total - 1
 }
 
 function navigateDown() {
   const total = results.verses.length + results.notes.length
+  if (total === 0) return
   selectedIndex.value = selectedIndex.value < total - 1 ? selectedIndex.value + 1 : 0
 }
 
@@ -277,7 +267,10 @@ function selectCurrent() {
     selectVerse(results.verses[selectedIndex.value])
   } else {
     const noteIndex = selectedIndex.value - results.verses.length
-    selectNote(results.notes[noteIndex])
+    const note = results.notes[noteIndex]
+    if (note) {
+      selectNote(note)
+    }
   }
 }
 
@@ -293,6 +286,13 @@ function selectNote(note: NoteResult) {
 
 let debounceTimer: ReturnType<typeof setTimeout>
 
+const keyHandler = (e: KeyboardEvent) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    toggle()
+  }
+}
+
 watch(query, () => {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(search, 200)
@@ -304,17 +304,24 @@ onMounted(async () => {
     chaptersData.value = res.chapters || []
   } catch(e) {}
 
-  const handler = (e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault()
-      isOpen.value ? close() : open()
-    }
-  }
-  window.addEventListener('keydown', handler)
-  onUnmounted(() => window.removeEventListener('keydown', handler))
+  registerInputFocus(() => inputRef.value?.focus())
+  window.addEventListener('keydown', keyHandler)
 })
 
-defineExpose({ open, close })
+onUnmounted(() => {
+  window.removeEventListener('keydown', keyHandler)
+})
+
+// Reset results when opening
+watch(isOpen, (val) => {
+  if (val) {
+    selectedIndex.value = 0
+    results.verses = []
+    results.notes = []
+  }
+})
+
+defineExpose({ open, close, toggle })
 </script>
 
 <style scoped>
