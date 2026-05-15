@@ -48,12 +48,33 @@
 
 ### Mention System Enhancements
 - [x] Keyboard navigation: Arrow keys + Enter to select, Escape to close
-- [x] Fixed search input keyboard event delegation (was trapping all keys)
 - [x] Verse preview in dropdown: Arabic text + English translation
 - [x] Chapter name shown in verse mode header
 - [x] Verse insertion format: `@2:255 => ""` with cursor between quotes
 - [x] New endpoint: `/api/quran/chapter-verses` for verse preview data
 - [x] Server-side caching for chapter verses (5 min)
+- [x] Chapter-only search (`11` to `114`) returns chapters + verses
+- [x] MentionList.vue handles mixed chapter/verse items
+
+## Session Updates (2026-05-15)
+
+### CommandPalette Enhancement
+- [x] Type `@chapter` (e.g., `@11` or `11`) to see first 10 verses with translation
+- [x] Type `@chapter:verse` (e.g., `@11:5`) to jump directly with preview content
+- [x] Verse preview cache for performance
+- [x] API search fallback for text content
+- [x] Notes search for authenticated users
+
+### NotePanel Component
+- [x] Slide-in panel for note view/edit on verse detail page
+- [x] View mode and edit mode support
+- [x] Verse mention support (click to open VersePanel)
+- [x] Stacking with VersePanel
+
+### Split QF Credentials
+- [x] Content API uses `QF_CONTENT_CLIENT_ID` / `QF_CONTENT_CLIENT_SECRET` (production)
+- [x] User API uses `QF_CLIENT_ID` / `QF_CLIENT_SECRET` (prelive)
+- [x] Updated nuxt.config.ts with split config maps
 
 ## Session Updates (2026-04-19)
 

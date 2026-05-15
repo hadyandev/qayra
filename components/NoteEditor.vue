@@ -58,7 +58,7 @@
           class="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
           title="Numbered List"
         >
-          <UIcon name="i-heroicons-list-numbers" class="w-4 h-4" />
+                <UIcon name="i-heroicons-list-bullet" class="w-4 h-4" />
         </button>
         <button 
           type="button"
@@ -99,7 +99,7 @@
       <EditorContent :editor="editor" class="prose dark:prose-invert max-w-none p-4 min-h-[200px] focus:outline-none" />
     </div>
     <template #fallback>
-      <UTextarea :model-value="modelValue" rows="10" class="w-full" readonly />
+      <UTextarea :model-value="modelValue" :rows="10" class="w-full" readonly />
     </template>
   </ClientOnly>
 </template>
@@ -145,7 +145,7 @@ const VerseRef = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['span', mergeAttributes({ 'data-verse-ref': '' }, HTMLAttributes), `@${HTMLAttributes.verseKey} => `]
+    return ['span', mergeAttributes({ 'data-verse-ref': '' }, HTMLAttributes), `@${HTMLAttributes.verseKey} => ""`]
   },
 
   addNodeView() {

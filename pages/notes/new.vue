@@ -194,13 +194,21 @@ onMounted(async () => {
     setTimeout(() => {
       const editor = noteEditor.value?.getEditor()
       if (editor) {
-        const firstPara = editor.state.doc.firstChild
-        if (firstPara) {
-          const textContent = firstPara.textContent || ''
-          const quotePos = textContent.indexOf('"')
-          if (quotePos >= 0) {
-            editor.chain().focus().setTextSelection(firstPara.pos + quotePos + 1).run()
+        // Find the position of the opening quote in the document
+        const doc = editor.state.doc
+        let foundPos = -1
+        doc.descendants((node, pos) => {
+          if (foundPos >= 0) return false
+          if (node.isText && node.text) {
+            const idx = node.text.indexOf('"')
+            if (idx >= 0) {
+              foundPos = pos + idx + 1 // +1 to position cursor after the quote
+              return false
+            }
           }
+        })
+        if (foundPos >= 0) {
+          editor.chain().focus().setTextSelection(foundPos).run()
         }
       }
     }, 100)

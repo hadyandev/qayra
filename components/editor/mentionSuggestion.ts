@@ -62,12 +62,13 @@ async function loadVersePreviews(chapterId: number): Promise<VersePreview[]> {
 export default {
   items: async ({ query }: { query: string }) => {
     const chapters = await loadChapters()
-    const q = query.trim()
-
+    const q = query.trim().toLowerCase().replace(/^@/, '')
+    
     if (!q) {
       return chapters.slice(0, 10)
     }
-
+    
+    // Case 1: Query ends with ':' → show all verses in that chapter
     if (q.endsWith(':')) {
       const chapterPart = q.slice(0, -1)
       const chapterNum = parseInt(chapterPart)
@@ -75,7 +76,7 @@ export default {
         const chapter = chapters.find(c => c.id === chapterNum)
         if (chapter) {
           const previews = await loadVersePreviews(chapterNum)
-          const items = Array.from({ length: chapter.verse_count }, (_, i) => ({
+          return Array.from({ length: chapter.verse_count }, (_, i) => ({
             chapter_id: chapterNum,
             verse_number: i + 1,
             key: `${chapterNum}:${i + 1}`,
@@ -83,12 +84,12 @@ export default {
             translation: previews[i]?.translation || '',
             chapter_name: chapter.name_simple
           }))
-          return items
         }
       }
       return []
     }
-
+    
+    // Case 2: Query contains ':' → filter verses
     if (q.includes(':')) {
       const [chapterPart, versePart] = q.split(':')
       const chapterNum = parseInt(chapterPart)
@@ -105,44 +106,68 @@ export default {
             chapter_name: chapter.name_simple
           }))
           if (versePart) {
-            return verses.filter(v => v.key.split(':')[1].startsWith(versePart.toLowerCase())).slice(0, 10)
+            const filterStr = versePart.toLowerCase()
+            return verses.filter(v => v.verse_number.toString().startsWith(filterStr)).slice(0, 10)
           }
           return verses.slice(0, 10)
         }
       }
       return []
     }
-
-    const chapterNum = parseInt(q)
-    if (!isNaN(chapterNum)) {
-      return chapters.filter(c => 
-        c.id.toString().startsWith(q) || c.name_simple.toLowerCase().includes(q.toLowerCase())
-      ).slice(0, 10)
+    
+    // Case 3: Pure number query (1-114) → show matching chapters AND verses
+    if (/^\d{1,3}$/.test(q)) {
+      const num = parseInt(q)
+      if (num >= 1 && num <= 114) {
+        const matchingChapters = chapters.filter(c => {
+          const idStr = c.id.toString()
+          return idStr === q || idStr.startsWith(q) ||
+                 c.name_simple?.toLowerCase().includes(q)
+        })
+        
+        // If exact chapter match (single result), also show its verses
+        if (matchingChapters.length === 1 && matchingChapters[0].id === num) {
+          const exactChapter = matchingChapters[0]
+          const previews = await loadVersePreviews(num)
+          const verseItems = Array.from({ length: exactChapter.verse_count }, (_, i) => ({
+            chapter_id: num,
+            verse_number: i + 1,
+            key: `${num}:${i + 1}`,
+            text: previews[i]?.text || '',
+            translation: previews[i]?.translation || '',
+            chapter_name: exactChapter.name_simple
+          }))
+          return [...matchingChapters, ...verseItems].slice(0, 10)
+        }
+        return matchingChapters.slice(0, 10)
+      }
+      return []
     }
-
+    
+    // Case 4: Text query → search chapters by name
     return chapters.filter(c => 
-      c.id.toString().startsWith(q.toLowerCase()) || 
-      c.name_simple.toLowerCase().includes(q.toLowerCase()) ||
+      c.id.toString() === q ||
+      c.name_simple.toLowerCase().includes(q) ||
       c.name_arabic.includes(q) ||
-      c.transliteration?.toLowerCase().includes(q.toLowerCase())
+      c.transliteration?.toLowerCase().includes(q)
     ).slice(0, 10)
   },
 
   render: () => {
     let component: VueRenderer
     let popup: any
-
+    
     return {
       onStart: (props: any) => {
         component = new VueRenderer(MentionList, {
           props: { items: props.items, command: props.command },
           editor: props.editor,
         })
-
+        
         if (!props.clientRect) {
           return
         }
-
+        
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
           appendTo: () => document.body,
@@ -155,7 +180,7 @@ export default {
           maxWidth: 400,
         })
       },
-
+      
       onUpdate(props: any) {
         if (component) {
           component.updateProps({ items: props.items, command: props.command })
@@ -166,16 +191,16 @@ export default {
           })
         }
       },
-
+      
       onKeyDown(props: any) {
         if (props.event.key === 'Escape') {
           popup?.[0]?.hide()
           return true
         }
-
+        
         return component?.ref?.onKeyDown?.(props.event)
       },
-
+      
       onExit() {
         popup?.[0]?.destroy()
         component?.destroy()

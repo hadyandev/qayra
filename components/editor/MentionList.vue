@@ -114,8 +114,8 @@ watch(isReady, async (ready) => {
 
 const isVerseMode = computed(() => {
   if (props.items.length === 0) return false
-  const first = props.items[0]
-  return 'verse_number' in first || 'chapter_id' in first
+  // Check if ANY item has verse_number (mixed list possible)
+  return props.items.some(item => 'verse_number' in item || 'chapter_id' in item)
 })
 
 const chapterInfo = computed(() => {
@@ -128,10 +128,10 @@ const chapterInfo = computed(() => {
 })
 
 const itemKey = (item: ChapterItem | VerseItem, index: number): string => {
-  if ('verse_number' in item) {
-    return item.key
+  if ('verse_number' in item || 'chapter_id' in item) {
+    return (item as VerseItem).key || index.toString()
   }
-  return item.id.toString()
+  return (item as ChapterItem).id.toString() || index.toString()
 }
 
 const displayItems = computed(() => {
@@ -139,19 +139,19 @@ const displayItems = computed(() => {
   
   const q = searchQuery.value.toLowerCase().trim()
   
-  if (isVerseMode.value) {
-    const verses = props.items as VerseItem[]
-    if (!q) return verses.slice(0, 10)
-    return verses.filter(v => {
-      const verseNum = v.key.split(':')[1]
+  // Handle mixed items (chapters + verses)
+  return props.items.filter(item => {
+    // Check if it's a verse item
+    if ('verse_number' in item || 'chapter_id' in item) {
+      if (!q) return true
+      const v = item as VerseItem
+      const verseNum = v.verse_number?.toString() || v.key?.split(':')[1] || ''
       return verseNum.startsWith(q)
-    }).slice(0, 10)
-  }
-  
-  const chapters = props.items as ChapterItem[]
-  if (!q) return chapters.slice(0, 10)
-  
-  return chapters.filter(c => {
+    }
+    
+    // It's a chapter item
+    const c = item as ChapterItem
+    if (!q) return true
     const chapterNum = c.id.toString()
     const matchesNumber = chapterNum.startsWith(q)
     const matchesName = c.name_simple?.toLowerCase().includes(q)

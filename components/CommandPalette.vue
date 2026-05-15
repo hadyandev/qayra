@@ -129,7 +129,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useCommandPalette } from '~/composables/useCommandPalette'
 
 type VerseResult = {
   verseKey: string
@@ -159,7 +158,8 @@ function highlightMatch(text: string) {
 }
 
 const user = useSupabaseUser()
-const { isOpen, query, open, close, toggle, registerInputFocus } = useCommandPalette()
+const isOpen = ref(false)
+const query = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
 const selectedIndex = ref(0)
 const isLoading = ref(false)
@@ -169,6 +169,61 @@ const results = reactive({
   verses: [] as VerseResult[],
   notes: [] as NoteResult[]
 })
+
+function open() {
+  isOpen.value = true
+  query.value = ''
+  nextTick(() => inputRefFocusFn?.())
+}
+
+function close() {
+  isOpen.value = false
+}
+
+function toggle() {
+  isOpen.value ? close() : open()
+}
+
+let inputRefFocusFn: (() => void) | null = null
+
+function registerInputFocus(fn: () => void) {
+  inputRefFocusFn = fn
+}
+
+const versePreviewCache = new Map<string, any[]>()
+
+async function loadVersePreviews(chapterId: number): Promise<any[]> {
+  const cacheKey = `ch-${chapterId}`
+  if (versePreviewCache.has(cacheKey)) {
+    return versePreviewCache.get(cacheKey)!
+  }
+  
+  try {
+    const data = await $fetch<{ verses: any[]; error?: string }>(
+      `/api/quran/chapter-verses?chapterId=${chapterId}`
+    )
+    if (data.verses && data.verses.length > 0) {
+      versePreviewCache.set(cacheKey, data.verses)
+      return data.verses
+    }
+  } catch (e) {
+    console.error(`Failed to load verse previews for chapter ${chapterId}:`, e)
+  }
+  return []
+}
+
+async function loadChapters(): Promise<any[]> {
+  if (chaptersData.value.length > 0) return chaptersData.value
+  
+  try {
+    const data = await $fetch<{ chapters: any[] }>('/api/chapters')
+    chaptersData.value = data.chapters || []
+    return chaptersData.value
+  } catch (e) {
+    console.error('Failed to load chapters:', e)
+    return chaptersData.value
+  }
+}
 
 const shortcuts = computed(() => {
   const items = [
@@ -193,29 +248,67 @@ async function search() {
   isLoading.value = true
   selectedIndex.value = 0
 
+  const q = query.value.trim()
+  const chapterOnlyRegex = /^@?(\d{1,3}):?$/
+  const chapterOnlyMatch = q.match(chapterOnlyRegex)
   const verseRegex = /^@?(\d{1,3}):(\d{1,3})$/
-  const match = query.value.trim().match(verseRegex)
+  const verseMatch = q.match(verseRegex)
 
   try {
     let versesList: VerseResult[] = []
 
-    if (match) {
-      const chapter = parseInt(match[1])
-      const verseStr = match[2]
+    // Case 1: Pure chapter number with optional colon (e.g., "@11", "11", "@11:")
+    if (chapterOnlyMatch) {
+      const chapter = parseInt(chapterOnlyMatch[1])
       if (chapter >= 1 && chapter <= 114) {
         let surahName = `Chapter ${chapter}`
         const ch = chaptersData.value.find((c: any) => c.id === chapter)
         if (ch) {
           surahName = ch.name_simple
         }
-        versesList.push({
-          verseKey: `${chapter}:${verseStr}`,
-          text: 'Jump directly to this verse',
+        // Show all verses in that chapter
+        const previews = await loadVersePreviews(chapter)
+        const verseItems = (previews || []).slice(0, 10).map((v: any) => ({
+          verseKey: v.key || `${chapter}:${v.verse_number || v.verseNumber}`,
+          text: v.translation || v.text || '',
           surahName: surahName
-        })
+        }))
+        versesList = verseItems
+      }
+    }
+    
+    // Case 2: Chapter:Verse (e.g., "@11:5")
+    if (verseMatch) {
+      const chapter = parseInt(verseMatch[1])
+      const verseStr = verseMatch[2]
+      if (chapter >= 1 && chapter <= 114) {
+        let surahName = `Chapter ${chapter}`
+        const ch = chaptersData.value.find((c: any) => c.id === chapter)
+        if (ch) {
+          surahName = ch.name_simple
+        }
+        
+        // Load verse previews for this chapter to show actual content
+        const previews = await loadVersePreviews(chapter)
+        const targetVerse = previews.find((v: any) => v.key === `${chapter}:${verseStr}`)
+        
+        if (targetVerse) {
+          versesList.push({
+            verseKey: `${chapter}:${verseStr}`,
+            text: targetVerse.translation || '',
+            surahName: surahName
+          })
+        } else {
+          versesList.push({
+            verseKey: `${chapter}:${verseStr}`,
+            text: 'Jump directly to this verse',
+            surahName: surahName
+          })
+        }
       }
     }
 
+    // Case 3: Always try API search (for both cases above)
     try {
       const verseRes = await $fetch<{ results: any[] }>('/api/quran/search', { q: query.value })
       const fetchedVerses = (verseRes.results || []).slice(0, 5).map((r: any) => ({
@@ -232,7 +325,7 @@ async function search() {
         }
       }
     } catch (e) {
-      console.warn('Search API error, keeping regex match:', e)
+      console.warn('Search API error, keeping chapter match:', e)
     }
 
     results.verses = versesList.slice(0, 5)
@@ -245,6 +338,8 @@ async function search() {
         results.notes = []
       }
     }
+  } catch (e) {
+    console.error('Search error:', e)
   } finally {
     isLoading.value = false
   }
@@ -300,10 +395,10 @@ watch(query, () => {
 
 onMounted(async () => {
   try {
-    const res = await $fetch<{chapters: any[]}>('/api/chapters')
-    chaptersData.value = res.chapters || []
+    const data = await $fetch<{ chapters: any[] }>('/api/chapters')
+    chaptersData.value = data.chapters || []
   } catch(e) {}
-
+  
   registerInputFocus(() => inputRef.value?.focus())
   window.addEventListener('keydown', keyHandler)
 })

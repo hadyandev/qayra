@@ -1,6 +1,6 @@
 # Qayra — progress
 
-**Last updated:** 2026-05-01
+**Last updated:** 2026-05-15
 
 ## Implemented
 
@@ -17,6 +17,10 @@
 - **Prelive flag** - displays PRELIVE badge in top-left corner when `QF_ENV=prelive`
 - **Random verse restriction** - only chapters 1-2 in prelive mode
 - **QF OAuth2 Integration (PKCE + Supabase persistence)** — completed 2026-05-01
+- **NotePanel component** — slide-in panel for note view/edit on verse detail page
+- **Mention system** — fully working with chapter search + verse preview
+- **CommandPalette** — Ctrl+K search with chapter verse display
+- **Split QF credentials** — content API uses production, user API uses prelive
 
 ## QF OAuth2 Integration (2026-05-01)
 
@@ -142,31 +146,50 @@ Returns activity with ranges:
 - QF User APIs require user OAuth token (not client_credentials)
 - Refresh tokens are simple base64 (for now)
 
-## Mention System Improvements (2026-05-01)
+## Mention System (2026-05-15)
 
 ### Keyboard Navigation
 - **Arrow keys (↑/↓)** navigate through the dropdown list
 - **Enter** selects the highlighted item — no need to click
 - **Escape** closes the dropdown
-- Fixed: search input now properly delegates keyboard events to navigation handler
-
-### Verse Preview in Dropdown
-- When selecting a verse, the dropdown shows **Arabic text + English translation**
-- Arabic text is right-aligned with proper line-height
-- English translation shown below, truncated to one line
-- Fallback: "Verse N" if API text not yet loaded
-- Chapter name shown in dropdown header (e.g., "Verse · Al-Baqarah")
 
 ### Verse Insertion Format
 - Selecting a verse inserts `@2:255 => ""` with cursor placed **between the quotes**
 - Ready for immediate typing of reflection
-- Placeholder updated to show: `@1:1 => ""`
-- Fixed logic to support mentions for chapters 11-114 properly.
+
+### Verse Preview in Dropdown
+- When selecting a chapter (e.g., `@11`), shows up to 10 verse previews with Arabic + English
+- When selecting a specific verse (e.g., `@11:5`), shows actual verse content
+- Falls back to "Jump directly to this verse" if preview not available
+
+### Chapter Search (e.g., `11`)
+- Query `11` to `114` returns both matching chapters AND verses (if exact chapter match)
+- Chapter items show name + verse count
+
+### CommandPalette Integration
+- `Ctrl+K` opens search panel
+- Type `@chapter` (e.g., `@1`) to see verses from that chapter
+- Type `@chapter:verse` (e.g., `@1:1`) to jump directly to specific verse
+- Verse previews show translation text (up to 10 results)
+- Falls back to API search for text content
 
 ### New Endpoint
 - `GET /api/quran/chapter-verses?chapterId=N` — fetches Arabic + translation for all verses in a chapter
 - Cached for 5 minutes server-side
-- Verse preview cache maintained in mention suggestion module
+- Used by both MentionList and CommandPalette
+
+## CommandPalette Search (2026-05-15)
+
+### Search Capabilities
+- Type `@chapter` (e.g., `@11` or `11`) to see first 10 verses with Arabic + translation
+- Type `@chapter:verse` (e.g., `@11:5`) to jump directly with preview content
+- API search for text content (fallback when no chapter match)
+- Notes search for authenticated users
+
+### Display
+- Verse items show verse key badge + Surah name + preview text
+- Notes items show icon + title + content snippet + date
+- Keyboard navigation with visual highlight
 
 ## Final Polish & UX Improvements (2026-05-01)
 

@@ -216,50 +216,49 @@
               <div
                 v-for="(reflection, idx) in reflections"
                 :key="idx"
-                class="relative"
+                class="relative cursor-pointer group"
+                @click="openNotePanel(reflection.noteId)"
               >
-                <div class="flex items-start gap-3">
-                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></div>
-                  <div class="ml-4 pl-5 py-4 pr-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 rounded-xl border border-amber-100 dark:border-amber-800/50 w-full">
-                    <div class="flex items-center justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                        <UIcon name="i-heroicons-chat-bubble-left" class="w-4 h-4 text-amber-500" />
-                        <span class="text-xs font-medium text-amber-600 dark:text-amber-400">From:</span>
-                        <NuxtLink 
-                          :to="`/notes/${reflection.noteId}`"
-                          class="text-sm font-medium text-[#18181B] dark:text-stone-100 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
-                        >
-                          {{ reflection.noteTitle || 'Untitled Note' }}
-                        </NuxtLink>
-                      </div>
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></div>
+                <div class="ml-4 pl-5 py-4 pr-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 rounded-xl border border-amber-100 dark:border-amber-800/50 w-full group-hover:shadow-md group-hover:border-amber-200 dark:group-hover:border-amber-700/50 transition-all">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <UIcon name="i-heroicons-chat-bubble-left" class="w-4 h-4 text-amber-500" />
+                      <span class="text-xs font-medium text-amber-600 dark:text-amber-400">From:</span>
+                      <span class="text-sm font-medium text-[#18181B] dark:text-stone-100">
+                        {{ reflection.noteTitle || 'Untitled Note' }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-1">
                       <span class="text-xs text-stone-400 flex items-center gap-1">
                         <UIcon name="i-heroicons-calendar" class="w-3 h-3" />
                         {{ formatDate(reflection.created_at) }}
                       </span>
+                      <UIcon name="i-heroicons-arrow-right" class="w-3 h-3 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <p class="text-[#18181B] dark:text-stone-200 leading-relaxed">
-                      {{ reflection.reflection }}
-                    </p>
-                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-amber-100 dark:border-amber-800/50">
-                      <div class="flex items-center gap-3 text-xs text-stone-400">
-                        <span v-if="reflection.source" class="flex items-center gap-1">
-                          <UIcon name="i-heroicons-bookmark" class="w-3 h-3" />
-                          {{ reflection.source }}
-                        </span>
-                        <span v-if="reflection.speaker" class="flex items-center gap-1">
-                          <UIcon name="i-heroicons-user" class="w-3 h-3" />
-                          {{ reflection.speaker }}
-                        </span>
-                      </div>
-                      <div v-if="reflection.tags?.length" class="flex flex-wrap gap-1">
-                        <span 
-                          v-for="tag in reflection.tags.slice(0, 3)" 
-                          :key="tag"
-                          class="px-2 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 text-xs rounded-full"
-                        >
-                          {{ tag }}
-                        </span>
-                      </div>
+                  </div>
+                  <p class="text-[#18181B] dark:text-stone-200 leading-relaxed line-clamp-3">
+                    {{ reflection.reflection }}
+                  </p>
+                  <div class="flex items-center justify-between mt-3 pt-2 border-t border-amber-100 dark:border-amber-800/50">
+                    <div class="flex items-center gap-3 text-xs text-stone-400">
+                      <span v-if="reflection.source" class="flex items-center gap-1">
+                        <UIcon name="i-heroicons-bookmark" class="w-3 h-3" />
+                        {{ reflection.source }}
+                      </span>
+                      <span v-if="reflection.speaker" class="flex items-center gap-1">
+                        <UIcon name="i-heroicons-user" class="w-3 h-3" />
+                        {{ reflection.speaker }}
+                      </span>
+                    </div>
+                    <div v-if="reflection.tags?.length" class="flex flex-wrap gap-1">
+                      <span 
+                        v-for="tag in reflection.tags.slice(0, 3)" 
+                        :key="tag"
+                        class="px-2 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 text-xs rounded-full"
+                      >
+                        {{ tag }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -307,6 +306,19 @@
       </div>
     </div>
   </div>
+
+  <VersePanel 
+    v-if="panelVerseKey"
+    :verse-key="panelVerseKey"
+    @close="panelVerseKey = null"
+  />
+
+  <NotePanel
+    v-if="selectedNoteId"
+    :note-id="selectedNoteId"
+    @close="selectedNoteId = null"
+    @saved="loadReflections"
+  />
 </template>
 
 <script setup lang="ts">
@@ -375,6 +387,15 @@ const loadingAudio = ref(false)
 
 const { verse } = useQuran()
 const user = useSupabaseUser()
+
+const selectedNoteId = ref<string | null>(null)
+const panelVerseKey = ref<string | null>(null)
+
+function openNotePanel(noteId: string) {
+  if (user.value) {
+    selectedNoteId.value = noteId
+  }
+}
 
 const [chapter, verseNum] = id.split(':').map(Number)
 
