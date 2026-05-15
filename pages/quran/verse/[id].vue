@@ -2,7 +2,7 @@
   <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
     <div class="max-w-3xl mx-auto px-6 py-12">
       <NuxtLink 
-        to="/browse" 
+        to="/quran" 
         class="inline-flex items-center gap-2 text-sm text-[#52525B] dark:text-stone-400 hover:text-[#18181B] dark:hover:text-stone-100 transition-colors duration-300 mb-12 group"
       >
         <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
@@ -27,9 +27,9 @@
       <template v-else-if="verseData">
         <header class="mb-12">
           <div class="flex items-center gap-2 text-sm text-[#52525B] dark:text-stone-400 mb-4">
-            <NuxtLink to="/browse" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Chapters</NuxtLink>
+            <NuxtLink to="/quran" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Chapters</NuxtLink>
             <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
-            <NuxtLink :to="`/browse?filter=topic:${verseTopics[0]?.slug}`" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">
+            <NuxtLink :to="`/quran?filter=topic:${verseTopics[0]?.slug}`" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">
               {{ chapterInfo?.name_simple || chapterInfo?.name || 'Chapter ' + chapter }}
             </NuxtLink>
           </div>
@@ -58,7 +58,7 @@
             <NuxtLink 
               v-for="topic in verseTopics" 
               :key="topic.slug"
-              :to="`/browse?filter=topic:${topic.slug}`"
+              :to="`/quran?filter=topic:${topic.slug}`"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200/60 dark:border-amber-700/50 rounded-full text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
             >
               <UIcon :name="topic.icon" class="w-4 h-4" />
@@ -144,7 +144,7 @@
             <div class="flex items-center justify-center gap-4">
               <NuxtLink 
                 v-if="prevVerse"
-                :to="`/verse/${prevVerse}`"
+                :to="`/quran/verse/${prevVerse}`"
                 class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
               >
                 <UIcon name="i-heroicons-chevron-left" class="w-4 h-4 text-stone-400 group-hover:text-amber-500 transition-colors" />
@@ -152,7 +152,7 @@
               </NuxtLink>
               <NuxtLink 
                 v-if="nextVerse"
-                :to="`/verse/${nextVerse}`"
+                :to="`/quran/verse/${nextVerse}`"
                 class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors group"
               >
                 <span class="font-mono text-sm text-[#18181B] dark:text-stone-100">@{{ nextVerse }}</span>
@@ -302,7 +302,7 @@
         </div>
         <h2 class="text-2xl font-medium text-[#18181B] dark:text-stone-100 mb-2">Verse not found</h2>
         <p class="text-[#52525B] dark:text-stone-400 mb-6">This verse could not be loaded.</p>
-        <NuxtLink to="/browse" class="text-amber-600 dark:text-amber-500 font-medium hover:text-amber-700 transition-colors">Browse Quran &rarr;</NuxtLink>
+        <NuxtLink to="/quran" class="text-amber-600 dark:text-amber-500 font-medium hover:text-amber-700 transition-colors">Browse Quran &rarr;</NuxtLink>
       </div>
     </div>
   </div>

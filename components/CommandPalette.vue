@@ -227,7 +227,7 @@ async function loadChapters(): Promise<any[]> {
 
 const shortcuts = computed(() => {
   const items = [
-    { label: 'Browse Quran', description: 'Explore all 114 chapters', to: '/browse', icon: 'i-heroicons-book-open' },
+    { label: 'Browse Quran', description: 'Explore all 114 chapters', to: '/quran', icon: 'i-heroicons-book-open' },
   ]
   if (user.value) {
     items.push(
@@ -370,7 +370,7 @@ function selectCurrent() {
 }
 
 function selectVerse(verse: VerseResult) {
-  navigateTo(`/verse/${verse.verseKey}`)
+  navigateTo(`/quran/verse/${verse.verseKey}`)
   close()
 }
 

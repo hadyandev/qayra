@@ -55,7 +55,7 @@
 
             <div class="flex justify-center mt-8">
               <NuxtLink 
-                :to="`/verse/${verseKey}`"
+                :to="`/quran/verse/${verseKey}`"
                 class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-xl font-medium hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-colors"
                 @click="$emit('close')"
               >

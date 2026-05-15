@@ -180,7 +180,7 @@ const editor = useEditor({
         return [
           'a',
           {
-            href: `/verse/${verseKey}`,
+            href: `/quran/verse/${verseKey}`,
             class: 'mention text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-md font-mono text-sm border-b-2 border-amber-200 dark:border-amber-700/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors cursor-pointer no-underline',
             'data-verse-key': verseKey,
           },

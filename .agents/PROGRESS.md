@@ -8,7 +8,7 @@
 - **Notes CRUD** + **Postgres FTS** (`search_vector`, `search_user_notes` RPC) + `/api/search/notes`.
 - **Quran Foundation** (prelive): OAuth client credentials, `x-auth-token` + `x-client-id`, chapters / verse / search Nitro routes.
 - **UI:** All pages redesigned with premium editorial luxury theme.
-  - Home hub, `/notes` timeline + filters, TipTap note editor, `/browse` chapter grid, `/verse/[id]` reader.
+  - Home hub, `/notes` timeline + filters, TipTap note editor, `/quran` chapter grid, `/quran/verse/[id]` reader.
   - Auth pages: `/login`, `/confirm`.
   - Floating glass navigation with spring animations.
 - **Publish API:** `POST /api/publish` for QF snippet publishing.
@@ -68,9 +68,9 @@ Disconnecting revokes the token on QF's `/oauth2/revoke` endpoint, deletes the l
 
 ### Recent Activity List
 - Combined list of notes + reading sessions, sorted by date
-- **Notes with verses:** `Reflected on 2:255` — verse is clickable, navigates to `/verse/2:255`
+- **Notes with verses:** `Reflected on 2:255` — verse is clickable, navigates to `/quran/verse/2:255`
 - **Notes with title only:** `Created note "My Thoughts"` — entire description clickable, navigates to `/notes/{id}`
-- **Reading sessions:** `Read 2:255-260, 3:1-5` — verse ranges are clickable, navigates to `/verse/{range}`
+- **Reading sessions:** `Read 2:255-260, 3:1-5` — verse ranges are clickable, navigates to `/quran/verse/{range}`
 - Multiple verse ranges shown up to 3, then `+N more`
 
 ### Chapter Overview

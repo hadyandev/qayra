@@ -58,7 +58,7 @@
             </div>
             <div class="flex-1"></div>
             <NuxtLink 
-              :to="`/verse/${chapter.id}:1`"
+              :to="`/quran/verse/${chapter.id}:1`"
               class="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium transition-colors"
             >
               Start reading

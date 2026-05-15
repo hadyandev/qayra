@@ -19,7 +19,7 @@ const pageTitle = computed(() => {
   const path = route.path
   
   if (path.startsWith('/notes/')) return 'Note'
-  if (path.startsWith('/verse/')) return 'Verse'
+  if (path.startsWith('/quran/verse/')) return 'Verse'
   if (path.startsWith('/hadith')) return 'Hadith'
   if (path.startsWith('/heatmap')) return 'My Progress'
   
@@ -28,7 +28,7 @@ const pageTitle = computed(() => {
     '/dashboard': 'Dashboard',
     '/notes': 'Notes',
     '/notes/new': 'New Note',
-    '/browse': 'Browse Quran',
+    '/quran': 'Browse Quran',
     '/stats': 'Statistics',
   }
   

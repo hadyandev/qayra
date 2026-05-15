@@ -187,7 +187,7 @@
               <NuxtLink 
                 v-for="vk in verse_keys" 
                 :key="vk"
-                :to="`/verse/${vk}`"
+                :to="`/quran/verse/${vk}`"
                 class="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-full text-sm font-mono text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               >
                 @{{ vk }}

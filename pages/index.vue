@@ -27,7 +27,7 @@
             <span>Start Writing</span>
           </NuxtLink>
           <NuxtLink 
-            to="/browse"
+            to="/quran"
             class="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-[#18181B] dark:text-stone-100 rounded-lg font-medium text-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-all duration-300"
           >
             <span>Browse Quran</span>
@@ -47,7 +47,7 @@
           </blockquote>
           <div class="flex items-center justify-between">
             <NuxtLink 
-              :to="`/verse/${randomVerse.verseKey}`"
+              :to="`/quran/verse/${randomVerse.verseKey}`"
               class="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors"
             >
               <span class="font-mono text-sm">@{{ randomVerse.verseKey }}</span>

@@ -173,7 +173,7 @@
             <p class="text-sm font-medium text-[#18181B] dark:text-stone-100">New Note</p>
           </NuxtLink>
           <NuxtLink
-            to="/browse"
+            to="/quran"
             class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl p-4 text-center hover:border-amber-200 dark:hover:border-amber-700/50 transition-colors"
           >
             <UIcon name="i-heroicons-book-open" class="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />

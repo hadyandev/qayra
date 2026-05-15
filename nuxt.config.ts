@@ -35,7 +35,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/login', '/confirm', '/', '/browse', '/verse/*']
+      exclude: ['/login', '/confirm', '/', '/quran', '/quran/verse/*']
     },
     providers: [
       {

@@ -105,7 +105,7 @@
                 Add note
               </NuxtLink>
               <NuxtLink 
-                :to="`/verse/${verseKey}`"
+                :to="`/quran/verse/${verseKey}`"
                 class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100 rounded-xl font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
               >
                 <UIcon name="i-heroicons-book-open" class="w-5 h-5" />

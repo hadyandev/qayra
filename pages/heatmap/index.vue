@@ -417,7 +417,7 @@ function navigateToChapter(id: number) {
 }
 
 function navigateToVerse(verseKey: string) {
-  router.push(`/verse/${verseKey}`)
+  router.push(`/quran/verse/${verseKey}`)
 }
 
 function navigateToNote(noteId: string) {

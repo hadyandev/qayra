@@ -56,7 +56,7 @@
               class="flex items-center gap-4 p-4 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-xl"
             >
               <NuxtLink 
-                :to="`/verse/${verse.key}`"
+                :to="`/quran/verse/${verse.key}`"
                 class="font-mono text-sm text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-3 py-1 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
               >
                 @{{ verse.key }}

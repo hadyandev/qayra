@@ -15,7 +15,7 @@
 - [x] Phase 6: `GET /api/search/notes` → RPC `search_user_notes` (Postgres FTS).
 - [x] Phase 7: `POST /api/publish` endpoint for QF publishing.
 - [x] UI Redesign: All pages upgraded to premium design system (Editorial Luxury theme).
-- [x] Clickable verse mentions: `@2:153` renders as `<a href="/verse/2:153">@2:153</a>`
+- [x] Clickable verse mentions: `@2:153` renders as `<a href="/quran/verse/2:153">@2:153</a>`
 - [x] Dynamic sources & speakers: User-specific autocomplete with Supabase persistence.
 - [x] Typed Supabase: `types/database.types.ts`
 - [x] QF API fixes: Fixed chapters/verse response mapping, default translation ID changed to 85
@@ -39,7 +39,7 @@
 - [x] Fixed calendar date display (local dates instead of UTC)
 - [x] Stat cards: Notes, Reading Sessions, Active Days, Completion %
 - [x] Recent activity list with meaningful descriptions
-- [x] Clickable verse references → `/verse/{chapter:verse}` or `/verse/{range}`
+- [x] Clickable verse references → `/quran/verse/{chapter:verse}` or `/quran/verse/{range}`
 - [x] Clickable note descriptions → `/notes/{id}`
 - [x] Chapter overview table with progress bars
 - [x] Activity API returns note titles + verse keys

@@ -1,7 +1,7 @@
 <template>
   <component 
     :is="interactive ? NuxtLink : 'div'"
-    :to="interactive ? `/verse/${verseKey}` : undefined"
+    :to="interactive ? `/quran/verse/${verseKey}` : undefined"
     class="group p-4 bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60 rounded-xl transition-colors"
     :class="[
       interactive ? 'hover:border-amber-200/60 dark:hover:border-amber-700/50 cursor-pointer' : '',

@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    :to="`/verse/${surah.id}:1`"
+    :to="`/quran/verse/${surah.id}:1`"
     class="group bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 hover:border-amber-200/60 dark:hover:border-amber-700/50 transition-all duration-300"
   >
     <div class="flex items-start gap-4">

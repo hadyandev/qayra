@@ -133,7 +133,7 @@
         <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#52525B] dark:text-stone-400">
           <p>Qayra — A Quran Learning Workspace</p>
           <div class="flex items-center gap-6">
-            <NuxtLink to="/browse" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Browse</NuxtLink>
+            <NuxtLink to="/quran" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Browse</NuxtLink>
             <NuxtLink to="/stats" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Stats</NuxtLink>
             <a href="https://github.com/hadyandev/qayra" target="_blank" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">GitHub</a>
           </div>
@@ -226,13 +226,13 @@ const navLinks = computed(() => {
     return [
       { to: '/dashboard', label: 'Dashboard' },
       { to: '/notes', label: 'Notes' },
-      { to: '/browse', label: 'Browse' },
+      { to: '/quran', label: 'Browse' },
       // { to: '/hadith', label: 'Hadith' },
       { to: '/heatmap', label: 'My Stats' },
     ]
   }
   return [
-    { to: '/browse', label: 'Browse' },
+    { to: '/quran', label: 'Browse' },
     { to: '/stats', label: 'Stats' },
     // { to: '/hadith', label: 'Hadith' },
   ]
