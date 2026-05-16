@@ -51,6 +51,29 @@
               <span v-if="chapterInfo.revelation" class="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/40 rounded-full text-xs font-medium text-amber-700 dark:text-amber-400 capitalize">
                 {{ chapterInfo.revelation }}
               </span>
+              <button
+                v-if="qfConnection?.connected"
+                @click="toggleBookmark"
+                class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5"
+                :class="isBookmarked 
+                  ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400' 
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400'"
+                :disabled="bookmarkLoading"
+              >
+                <UIcon 
+                  :name="isBookmarked ? 'i-heroicons-bookmark-solid' : 'i-heroicons-bookmark'" 
+                  class="w-4 h-4" 
+                />
+                {{ isBookmarked ? 'Saved' : 'Save' }}
+              </button>
+              <NuxtLink 
+                v-else-if="qfConnection"
+                to="/dashboard"
+                class="px-3 py-1.5 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-medium text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                Connect to save
+              </NuxtLink>
+              <p v-if="bookmarkError" class="text-xs text-red-500">{{ bookmarkError }}</p>
             </div>
           </div>
 
@@ -324,6 +347,8 @@
 <script setup lang="ts">
 import { quranTopics } from '~/data/quranTopics'
 import { surahMeanings } from '~/data/surahMeanings'
+import { useQfConnection } from '~/composables/useQfConnection'
+import { useQfBookmarks } from '~/composables/useQfBookmarks'
 
 definePageMeta({ layout: 'default' })
 
@@ -387,17 +412,50 @@ const loadingAudio = ref(false)
 
 const { verse } = useQuran()
 const user = useSupabaseUser()
+const { connection: qfConnection, fetchConnection } = useQfConnection()
+const { bookmarks, fetchBookmarks, addBookmark, removeBookmark, isVerseBookmarked } = useQfBookmarks()
 
 const selectedNoteId = ref<string | null>(null)
 const panelVerseKey = ref<string | null>(null)
+const bookmarkLoading = ref(false)
+const bookmarkError = ref<string | null>(null)
+
+const [chapter, verseNum] = id.split(':').map(Number)
+
+const isBookmarked = computed(() => {
+  return !!isVerseBookmarked(chapter, verseNum)
+})
+
+async function toggleBookmark() {
+  if (bookmarkLoading.value) return
+  bookmarkLoading.value = true
+  bookmarkError.value = null
+  
+  try {
+    const existing = isVerseBookmarked(chapter, verseNum)
+    if (existing) {
+      await removeBookmark(existing.id)
+    } else {
+      const result = await addBookmark(chapter, verseNum)
+      if (result.needsReauth) {
+        bookmarkError.value = 'Session expired. Please reconnect your QF account.'
+        qfConnection.value = { connected: false } as any
+        return
+      }
+      if (result.error) {
+        bookmarkError.value = result.error
+      }
+    }
+  } finally {
+    bookmarkLoading.value = false
+  }
+}
 
 function openNotePanel(noteId: string) {
   if (user.value) {
     selectedNoteId.value = noteId
   }
 }
-
-const [chapter, verseNum] = id.split(':').map(Number)
 
 const prevVerse = computed(() => {
   if (!verseNum || verseNum <= 1) return null
@@ -521,6 +579,10 @@ async function loadRelatedVerses() {
 let verseActivityLogged = false
 
 onMounted(async () => {
+  // Fetch QF connection first
+  await fetchConnection()
+  console.log('[Verse] QF Connection state:', JSON.stringify(qfConnection.value))
+  
   // After 10 seconds, log the reading activity if still on this verse
   setTimeout(() => {
     if (verseData.value?.verse_key && !verseActivityLogged) {
@@ -561,6 +623,12 @@ onMounted(async () => {
           reciter: result.audio.reciter
         }
       }
+      
+      // Fetch QF bookmarks if connected
+      if (qfConnection.value?.connected) {
+        fetchBookmarks()
+      }
+      
       await Promise.all([loadRelatedVerses(), loadReflections()])
     } else {
       error.value = 'Verse not found'

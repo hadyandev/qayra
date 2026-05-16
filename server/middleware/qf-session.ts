@@ -43,13 +43,24 @@ export default defineEventHandler(async (event) => {
     const params = new URLSearchParams()
     params.set('grant_type', 'refresh_token')
     params.set('refresh_token', connection.refresh_token)
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    if (config.isPublicClient) {
+      params.set('client_id', config.clientId)
+    } else if (config.clientSecret) {
+      headers.Authorization = `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}`
+    }
     
-    const tokens = await $fetch(`${config.authBaseUrl}/oauth2/token`, {
+    const tokens = await $fetch<{
+      access_token?: string
+      refresh_token?: string
+      expires_in?: number
+    }>(`${config.authBaseUrl}/oauth2/token`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}`
-      },
+      headers,
       body: params.toString()
     })
     
@@ -66,7 +77,7 @@ export default defineEventHandler(async (event) => {
     
     setCookie(event, `${envPrefix}access_token`, tokens.access_token, {
       ...cookieOptions,
-      maxAge: tokens.expires_in
+      maxAge: tokens.expires_in || 3600
     })
     
     if (tokens.refresh_token) {
@@ -88,9 +99,22 @@ export default defineEventHandler(async (event) => {
     event.context.qfTokens = {
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token || connection.refresh_token,
-      expiresAt: Date.now() + tokens.expires_in * 1000
+      expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
     }
   } catch (err: any) {
     console.error('[QF Session] Auto-restore failed:', err.message)
+    
+    // If token is invalid/expired, clear from DB so we don't keep trying
+    if (err.status === 401 || err.status === 400 || err.message?.includes('invalid') || err.message?.includes('expired')) {
+      try {
+        await supabase
+          .from('qf_connections')
+          .delete()
+          .eq('id', connection.id)
+        console.log('[QF Session] Cleared invalid/expired connection')
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
   }
 })

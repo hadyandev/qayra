@@ -235,12 +235,12 @@ async function loadGlobalStats() {
 }
 
 const config = useRuntimeConfig()
-const isPrelive = computed(() => config.public.qfEnv === 'prelive')
+const isContentPrelive = computed(() => config.public.qfContentEnv === 'prelive')
 
 async function loadRandomVerse() {
   try {
-    // In prelive, only use chapters 1-2 to avoid hitting production data
-    const maxChapter = isPrelive.value ? 2 : 114
+    // Only limit random content when the Content API itself is prelive.
+    const maxChapter = isContentPrelive.value ? 2 : 114
     const chapter = Math.floor(Math.random() * maxChapter) + 1
     const data = await $fetch(`/api/quran/chapter-verses?chapter=${chapter}&limit=1`)
     const verses = data.verses || []

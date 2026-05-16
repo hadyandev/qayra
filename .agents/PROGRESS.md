@@ -1,6 +1,6 @@
 # Qayra — progress
 
-**Last updated:** 2026-05-15
+**Last updated:** 2026-05-16
 
 ## Implemented
 
@@ -21,12 +21,18 @@
 - **Mention system** — fully working with chapter search + verse preview
 - **CommandPalette** — Ctrl+K search with chapter verse display
 - **Split QF credentials** — content API uses production, user API uses prelive
+- **Route restructuring** — `/browse` → `/quran`, `/verse/` → `/quran/verse/`
+- **QF Bookmarks** — Save/remove verses to Quran Foundation account
+- **Chapter-verses endpoint** — verse preview data with 5-min server cache
+- **BookmarkSlidePanel** — slide-in panel matching VersePanel design system
+- **Session auto-cleanup** — expired tokens removed from DB, "reconnect" message shown
+- **Updated OAuth scopes** — includes `bookmark` scope for bookmark API access
 
 ## QF OAuth2 Integration (2026-05-01)
 
 ### What was built
 - **OAuth Authorization Code + PKCE flow** replacing client_credentials
-- **Scopes:** `openid offline_access activity_day streak`
+- **Scopes:** `openid offline_access activity_day streak bookmark`
 - **Supabase persistence:** `qf_connections` table stores refresh token, user info, scopes
 - **Auto-restore middleware:** `server/middleware/qf-session.ts` restores QF session on every page load when cookies are missing
 - **One-time login:** User connects QF account once, stays connected across browser sessions
@@ -51,6 +57,50 @@
 
 ### Disconnect behavior
 Disconnecting revokes the token on QF's `/oauth2/revoke` endpoint, deletes the local `qf_connections` record, and clears cookies. No redirects or extra steps.
+
+## QF Bookmarks (2026-05-16)
+
+### What was built
+- **Bookmark API** — POST/GET/DELETE endpoints for QF `/auth/v1/bookmarks`
+- **Bookmark button** on verse detail page (`/quran/verse/[id]`) — toggle save/remove
+- **Bookmarks page** (`/bookmarks`) — lists all saved verses with preview cards
+- **BookmarkSlidePanel** — slide-in panel showing Arabic, translation, tafsir, notes
+- **Session expiration handling** — expired tokens auto-cleared from DB; UI shows "Session expired. Please reconnect."
+
+### API payload format (from QF SDK)
+- POST: `{key, mushaf: 4, type: 'ayah', verseNumber}`
+- GET: `{first, mushafId: 4, type: 'ayah'}`
+- DELETE: `/auth/v1/bookmarks/{id}`
+
+### New files
+- `server/api/qf/bookmarks/index.post.ts` — Add bookmark
+- `server/api/qf/bookmarks/index.get.ts` — List bookmarks (with session expiration cleanup)
+- `server/api/qf/bookmarks/[id].delete.ts` — Remove bookmark
+- `pages/bookmarks.vue` — Bookmarks list with preview cards + slide panel
+- `components/BookmarkSlidePanel.vue` — Full verse detail in slide panel
+- `composables/useQfBookmarks.ts` — Frontend bookmark state management
+
+### Modified files
+- `pages/quran/verse/[id].vue` — Added bookmark toggle button + loading state
+
+## Route Restructuring (2026-05-16)
+
+### Changes
+- `/browse` → `/quran` — Chapter grid moved under `/quran`
+- `/verse/[id]` → `/quran/verse/[id]` — Verse detail moved under `/quran`
+- All internal links, back buttons, and navigation updated to use new paths
+
+## Session Auto-Restore Improvements (2026-05-16)
+
+### Token cleanup on failure
+When QF refresh tokens are invalid/expired:
+- Middleware auto-clears the connection from `qf_connections` table (401/400/invalid/expired)
+- API endpoints return `SESSION_EXPIRED` + `needsReauth: true`
+- Frontend shows clear "reconnect" messaging
+- Prevents repeated failed refresh attempts
+
+### OAuth scope update
+- Added `bookmark` to `QF_OAUTH_SCOPES` — enables bookmark read/write API access
 
 ## Heatmap / Statistics Page Rewrite (2026-05-01)
 

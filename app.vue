@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div v-if="isPrelive" class="fixed top-0 left-0 z-50 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-br">
-      PRELIVE
+    <div v-if="isUserPrelive" class="fixed top-0 left-0 z-50 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-br">
+      QF USER PRELIVE
     </div>
     <NuxtLayout>
       <NuxtPage />
@@ -13,7 +13,7 @@
 const config = useRuntimeConfig()
 const route = useRoute()
 
-const isPrelive = computed(() => config.public.qfEnv === 'prelive')
+const isUserPrelive = computed(() => config.public.qfUserEnv === 'prelive')
 
 const pageTitle = computed(() => {
   const path = route.path

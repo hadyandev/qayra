@@ -137,7 +137,12 @@ npm install
 cp .env.example .env
 ```
 
-Fill environment variables for Supabase and Quran Foundation.
+Fill environment variables for Supabase and Quran Foundation. Qayra keeps Quran Foundation environments split by API family:
+
+- `QF_CONTENT_ENV=production` for Quran content/search with full production data.
+- `QF_USER_ENV=prelive` for OAuth and user APIs while production user APIs are unavailable.
+
+Keep `QF_CLIENT_SECRET` and `QF_CONTENT_CLIENT_SECRET` server-side only.
 
 ### Database
 

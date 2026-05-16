@@ -232,6 +232,7 @@ const shortcuts = computed(() => {
   if (user.value) {
     items.push(
       { label: 'My Notes', description: 'View your notes', to: '/notes', icon: 'i-heroicons-document-text' },
+      { label: 'Saved Verses', description: 'View bookmarked verses', to: '/bookmarks', icon: 'i-heroicons-bookmark' },
       { label: 'Create Note', description: 'Start writing a new note', to: '/notes/new', icon: 'i-heroicons-plus' },
     )
   }

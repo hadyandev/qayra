@@ -2,7 +2,7 @@ import { useRuntimeConfig } from '#imports'
 
 type QfScope = 'content' | 'search' | 'user' | 'streak' | 'bookmark' | 'goal' | 'reading_session' | 'activity_day'
 
-const tokenCache: Partial<Record<QfScope, { token: string; expiresAt: number }>> = {}
+const tokenCache: Record<string, { token: string; expiresAt: number }> = {}
 
 interface TokenResponse {
   access_token?: string
@@ -65,10 +65,6 @@ function isUserScope(scope: QfScope): boolean {
 export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
   const config = useRuntimeConfig()
   const now = Date.now()
-  const cached = tokenCache[scope]
-  if (cached && cached.expiresAt > now + 5 * 60 * 1000) {
-    return cached.token
-  }
 
   let clientId: string
   let clientSecret: string
@@ -93,10 +89,16 @@ export async function getQfAccessToken(scope: QfScope): Promise<string | null> {
   }
 
   const oauthScope = oauthScopeFor(scope)
+  const cacheKey = `${tokenUrl}:${clientId}:${oauthScope}`
+  const cached = tokenCache[cacheKey]
+  if (cached && cached.expiresAt > now + 5 * 60 * 1000) {
+    return cached.token
+  }
+
   const token = await getTokenWithCredentials(clientId, clientSecret, tokenUrl, oauthScope)
 
   if (token) {
-    tokenCache[scope] = {
+    tokenCache[cacheKey] = {
       token,
       expiresAt: now + 3600 * 1000
     }

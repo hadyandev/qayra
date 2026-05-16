@@ -6,21 +6,29 @@ export default defineEventHandler(async (event) => {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
+    console.log('[QF Connection] No user found')
     return { connected: false }
   }
   
-  const env = getQfEnvKey()
+  console.log('[QF Connection] User:', user.id)
   
-  const { data: connection } = await supabase
+  const env = getQfEnvKey()
+  console.log('[QF Connection] Env:', env)
+  
+  const { data: connection, error } = await supabase
     .from('qf_connections')
     .select('*')
     .eq('user_id', user.id)
     .eq('env', env)
     .single()
   
-  if (!connection) {
+  console.log('[QF Connection] Query result:', { connection: !!connection, error: error?.message })
+  
+  if (!connection || error) {
     return { connected: false }
   }
+  
+  console.log('[QF Connection] Found:', connection.id, 'qf_sub:', connection.qf_sub)
   
   return {
     connected: true,

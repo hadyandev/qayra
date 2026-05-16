@@ -56,7 +56,27 @@
 - [x] Chapter-only search (`11` to `114`) returns chapters + verses
 - [x] MentionList.vue handles mixed chapter/verse items
 
-## Session Updates (2026-05-15)
+## Session Updates (2026-05-16)
+
+### Route Restructuring
+- [x] `/browse` → `/quran` (chapter grid)
+- [x] `/verse/[id]` → `/quran/verse/[id]` (verse detail)
+- [x] All internal links updated to new paths
+
+### QF Bookmarks
+- [x] POST/GET/DELETE bookmark API endpoints
+- [x] Bookmark toggle button on verse detail page
+- [x] Bookmarks list page (`/bookmarks`) with preview cards
+- [x] `useQfBookmarks` composable with session expiry handling
+- [x] `BookmarkSlidePanel` component (Arabic, translation, tafsir)
+- [x] Session expiration auto-cleanup from `qf_connections` table
+
+### Chapter-Verses Endpoint
+- [x] `GET /api/quran/chapter-verses?chapterId=N` for verse preview data
+- [x] 5-minute server-side caching
+
+### OAuth Scopes
+- [x] Updated to include `bookmark` scope
 
 ### CommandPalette Enhancement
 - [x] Type `@chapter` (e.g., `@11` or `11`) to see first 10 verses with translation
@@ -147,26 +167,28 @@
 ### Phase 15: QF User API Integration
 > Integrate Quran Foundation User APIs for bookmarks, highlights, sync progress
 
-**Completed (2026-05-01):**
+**Completed (2026-05-16):**
 - [x] OAuth Authorization Code + PKCE flow
 - [x] Supabase persistence (`qf_connections` table)
 - [x] Auto-restore QF session on page load (`server/middleware/qf-session.ts`)
-- [x] Connection status API (`/api/qf/connection`)
+- [x] Connection status API (`GET /api/qf/connection`)
 - [x] Disconnect API (revoke token on QF + delete local record)
 - [x] User menu shows QF connection status (green dot / Connect button)
 - [x] QfConnectModal with connected/disconnected states
 - [x] Heatmap combined activity calendar (notes + reading)
 - [x] Activity list with meaningful descriptions and clickable verses/notes
 - [x] OAuth callback redirects to previous page after success
+- [x] **Bookmarks API** — save/remove verses to QF account
+- [x] Bookmark button on verse detail page (`/quran/verse/[id]`)
+- [x] `useQfBookmarks` composable for frontend state
 
 **Planned Features:**
-- [ ] Save user bookmarks/favorites to QF profile
-- [ ] Sync reading progress across apps
-- [ ] User-specific highlights backup
+- [ ] Sync reading progress across apps (future)
+- [ ] User-specific highlights backup (future)
 
 **Implementation Notes:**
 - QF user APIs use separate base URL (`userApiBase` in config)
-- Token scopes: `openid offline_access activity_day streak`
+- Token scopes: `openid offline_access activity_day streak bookmark`
 - Requires OAuth token (Authorization Code + PKCE)
 - Refresh tokens auto-restored from Supabase when cookies missing
 
@@ -211,7 +233,7 @@ Run migrations in Supabase Dashboard SQL Editor (no CLI needed):
    - `supabase/migrations/20260414001000_disable_rls_for_testing.sql` (optional, for testing)
    - `supabase/migrations/20260414002000_sources_and_speakers.sql`
    - `supabase/migrations/20260421000000_qf_connections.sql` (QF OAuth persistence)
-   - Additional migrations as needed
+   - `supabase/migrations/20260501000000_profiles.sql` (User profiles)
 
 ## Verify locally
 

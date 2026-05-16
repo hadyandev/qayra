@@ -206,7 +206,7 @@ definePageMeta({ layout: 'default' })
 
 const config = useRuntimeConfig()
 const user = useSupabaseUser()
-const isPrelive = computed(() => config.public.qfEnv === 'prelive')
+const isContentPrelive = computed(() => config.public.qfContentEnv === 'prelive')
 
 if (!user.value) {
   navigateTo('/login')
@@ -312,8 +312,8 @@ async function loadDashboard() {
 
 async function loadFeaturedVerse() {
   try {
-    // In prelive, only use chapters 1-2 to avoid production data
-    const maxChapter = isPrelive.value ? 2 : 114
+    // Only limit random content when the Content API itself is prelive.
+    const maxChapter = isContentPrelive.value ? 2 : 114
     const randomChapter = Math.floor(Math.random() * maxChapter) + 1
     const { verses } = await $fetch<{ verses: Array<{ verse_key: string; text_uthmani?: string; text?: string; translations?: Array<{ text: string }> }> }>(
       `/api/quran/chapter-verses?chapter=${randomChapter}&limit=1`

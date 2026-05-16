@@ -140,7 +140,7 @@ definePageMeta({ layout: 'default' })
 
 const config = useRuntimeConfig()
 const user = useSupabaseUser()
-const isPrelive = computed(() => config.public.qfEnv === 'prelive')
+const isPrelive = computed(() => config.public.qfUserEnv === 'prelive')
 
 if (!user.value) {
   navigateTo('/login')

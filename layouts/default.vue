@@ -226,13 +226,14 @@ const navLinks = computed(() => {
     return [
       { to: '/dashboard', label: 'Dashboard' },
       { to: '/notes', label: 'Notes' },
-      { to: '/quran', label: 'Browse' },
+      { to: '/quran', label: 'Quran' },
       // { to: '/hadith', label: 'Hadith' },
+      { to: '/bookmarks', label: 'Saved' },
       { to: '/heatmap', label: 'My Stats' },
     ]
   }
   return [
-    { to: '/quran', label: 'Browse' },
+    { to: '/quran', label: 'Quran' },
     { to: '/stats', label: 'Stats' },
     // { to: '/hadith', label: 'Hadith' },
   ]

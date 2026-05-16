@@ -23,8 +23,9 @@ const QF_CONFIG_MAP = {
 } as const
 
 function getUserEnv(): 'prelive' | 'production' {
-  const env = process.env.QF_ENV || 'prelive'
-  return (env === 'production' || env === 'live') ? 'production' : 'prelive'
+  const config = useRuntimeConfig()
+  const env = (config.qfUserEnv as string | undefined) || process.env.QF_USER_ENV || process.env.QF_ENV
+  return env === 'production' || env === 'live' ? 'production' : 'prelive'
 }
 
 /**
@@ -42,6 +43,9 @@ export function getQfOAuthConfig(): QfOAuthConfig {
   const clientSecret = config.qfClientSecret as string | undefined
   const redirectUri = config.qfOAuthRedirectUri as string | undefined
   const scopes = config.qfOAuthScopes as string | undefined
+  const apiBaseUrl = config.qfUserApiBase as string | undefined
+  
+  const defaultScopes = 'openid offline_access activity_day streak bookmark'
 
   if (!clientId) {
     throw new Error(
@@ -58,9 +62,9 @@ export function getQfOAuthConfig(): QfOAuthConfig {
     clientId,
     clientSecret,
     redirectUri,
-    scopes,
+    scopes: scopes || defaultScopes,
     authBaseUrl: envConfig.authBaseUrl,
-    apiBaseUrl: envConfig.apiBaseUrl,
+    apiBaseUrl: apiBaseUrl || envConfig.apiBaseUrl,
     isPublicClient
   }
 }
@@ -74,7 +78,8 @@ export function getQfEnvKey(): 'prelive' | 'production' {
 }
 
 export function validateQfCredentials(): string | undefined {
-  const clientId = process.env.QF_CLIENT_ID
+  const config = useRuntimeConfig()
+  const clientId = config.qfClientId as string | undefined
   if (!clientId) {
     return 'QF_CLIENT_ID is required'
   }
