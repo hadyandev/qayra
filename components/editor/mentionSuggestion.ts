@@ -158,11 +158,22 @@ export default {
   render: () => {
     let component: VueRenderer
     let popup: any
+    let editor: any
+    let range: any
+
+    function closeMention() {
+      popup?.[0]?.hide()
+      if (editor && range) {
+        editor.chain().deleteRange(range).focus().run()
+      }
+    }
     
     return {
       onStart: (props: any) => {
+        editor = props.editor
+        range = props.range
         component = new VueRenderer(MentionList, {
-          props: { items: props.items, command: props.command },
+          props: { items: props.items, command: props.command, close: closeMention },
           editor: props.editor,
         })
         
@@ -185,7 +196,7 @@ export default {
       
       onUpdate(props: any) {
         if (component) {
-          component.updateProps({ items: props.items, command: props.command })
+          component.updateProps({ items: props.items, command: props.command, close: closeMention })
         }
         if (popup && popup[0]) {
           popup[0].setProps({
@@ -196,7 +207,7 @@ export default {
       
       onKeyDown(props: any) {
         if (props.event.key === 'Escape') {
-          popup?.[0]?.hide()
+          closeMention()
           return true
         }
         

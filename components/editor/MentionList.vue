@@ -87,16 +87,23 @@ interface VerseItem {
 const props = defineProps<{
   items: (ChapterItem | VerseItem)[]
   command: (item: any) => void
+  close?: () => void
 }>()
 
 const selectedIndex = ref(0)
 const searchQuery = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 const isReady = ref(false)
+const prevHasVerses = ref(false)
 
 watch(() => props.items, (newItems) => {
   selectedIndex.value = 0
   searchQuery.value = ''
+  if (newItems.some(item => 'verse_number' in item || 'chapter_id' in item)) {
+    prevHasVerses.value = true
+  } else if (newItems.length > 0) {
+    prevHasVerses.value = false
+  }
 }, { deep: true })
 
 onMounted(async () => {
@@ -113,8 +120,7 @@ watch(isReady, async (ready) => {
 })
 
 const isVerseMode = computed(() => {
-  if (props.items.length === 0) return false
-  // Check if ANY item has verse_number (mixed list possible)
+  if (props.items.length === 0) return prevHasVerses.value
   return props.items.some(item => 'verse_number' in item || 'chapter_id' in item)
 })
 
@@ -197,7 +203,8 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
   }
 
   if (event.key === 'Escape') {
-    event.stopPropagation()
+    event.preventDefault()
+    props.close?.()
     return
   }
 }
