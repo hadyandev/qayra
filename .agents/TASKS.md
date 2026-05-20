@@ -56,6 +56,27 @@
 - [x] Chapter-only search (`11` to `114`) returns chapters + verses
 - [x] MentionList.vue handles mixed chapter/verse items
 
+## Session Updates (2026-05-20)
+
+### Mention System Fixes & UX
+- [x] Fixed mention search using wrong endpoint (`/api/chapters` → `/api/quran/chapters`)
+- [x] Fixed `verse_count` → `verses_count` field name mismatch in Chapter interface
+- [x] All 114 chapters loaded on `@` (no longer limited to first 10) — search bar filters locally
+- [x] "No verses found" shown instead of "No chapters found" when verse search returns empty
+- [x] Escape key properly deactivates tiptap mention session (`closeMention` deletes `@` range)
+- [x] Search bar Escape passes `close` callback to hide popup + cancel mention
+
+### Bookmark Page Reactive Previews
+- [x] Preview cache changed from `Map` to `reactive({})` — Vue tracks cache, previews appear on load
+- [x] Notes count cache also reactive (`Reactive<Record<string, number>>`)
+- [x] `fetchBookmarks` properly awaited in `onMounted`
+- [x] Watcher simplified (no stale `loadingPreview` flag)
+
+### Chapter Names on Bookmark Cards
+- [x] Chapter names loaded from `/api/quran/chapters` at runtime
+- [x] Shows transliterated name (e.g., "Ar-Rum") + Arabic (الروم) on each card
+- [x] Falls back to `surahMeanings` English names if API unavailable
+
 ## Session Updates (2026-05-16)
 
 ### Route Restructuring

@@ -1,6 +1,27 @@
 # Qayra — progress
 
-**Last updated:** 2026-05-16
+**Last updated:** 2026-05-20
+
+## Session Updates (2026-05-20)
+
+### Mention System Fixes & UX
+- [x] Mention search now uses `/api/quran/chapters` (was broken `/api/chapters`)
+- [x] Fixed field name mismatch `verse_count` → `verses_count` across all mention components
+- [x] All 114 chapters now load into search bar on `@` — typing a number filters from full list
+- [x] "No verses found" message when verse search yields no results (instead of "No chapters found")
+- [x] Escape key properly closes popup AND deactivates mention session — typing `@` again reopens
+
+### Bookmark Page Reactive Previews
+- [x] Preview cache changed from `Map` to `reactive({})` — Vue reactivity now tracks cache updates
+- [x] Verse previews appear automatically on bookmark cards as they load (no need to click)
+- [x] Notes count cache also made reactive
+- [x] `fetchBookmarks` properly awaited in `onMounted`
+- [x] Chapter names (transliterated + Arabic) loaded from API and displayed on each card
+
+### Chapter Name Source
+- [x] Created `data/surahNames.ts` with all 114 names (removed — static file not needed)
+- [x] Chapter names now fetched live from `/api/quran/chapters` at runtime
+- [x] Falls back to `surahMeanings` English names if API unavailable
 
 ## Implemented
 
