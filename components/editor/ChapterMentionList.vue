@@ -33,7 +33,7 @@ interface Chapter {
   id: number
   name_simple: string
   name_arabic: string
-  verse_count: number
+  verses_count: number
 }
 
 const props = defineProps<{

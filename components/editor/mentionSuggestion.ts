@@ -7,7 +7,7 @@ interface Chapter {
   id: number
   name_simple: string
   name_arabic: string
-  verse_count: number
+  verses_count: number
   transliteration?: string
 }
 
@@ -27,9 +27,9 @@ async function loadChapters(): Promise<Chapter[]> {
   if (chaptersCache.length > 0 && now - cacheTime < CACHE_DURATION) {
     return chaptersCache
   }
-  
+
   try {
-    const data = await $fetch<{ chapters: Chapter[] }>('/api/chapters')
+    const data = await $fetch<{ chapters: Chapter[] }>('/api/quran/chapters')
     chaptersCache = data.chapters || []
     cacheTime = now
     return chaptersCache
@@ -65,7 +65,7 @@ export default {
     const q = query.trim().toLowerCase().replace(/^@/, '')
     
     if (!q) {
-      return chapters.slice(0, 10)
+      return chapters
     }
     
     // Case 1: Query ends with ':' → show all verses in that chapter
@@ -76,7 +76,7 @@ export default {
         const chapter = chapters.find(c => c.id === chapterNum)
         if (chapter) {
           const previews = await loadVersePreviews(chapterNum)
-          return Array.from({ length: chapter.verse_count }, (_, i) => ({
+          return Array.from({ length: chapter.verses_count }, (_, i) => ({
             chapter_id: chapterNum,
             verse_number: i + 1,
             key: `${chapterNum}:${i + 1}`,
@@ -97,7 +97,7 @@ export default {
         const chapter = chapters.find(c => c.id === chapterNum)
         if (chapter) {
           const previews = await loadVersePreviews(chapterNum)
-          const verses = Array.from({ length: chapter.verse_count }, (_, i) => ({
+          const verses = Array.from({ length: chapter.verses_count }, (_, i) => ({
             chapter_id: chapterNum,
             verse_number: i + 1,
             key: `${chapterNum}:${i + 1}`,
@@ -119,17 +119,13 @@ export default {
     if (/^\d{1,3}$/.test(q)) {
       const num = parseInt(q)
       if (num >= 1 && num <= 114) {
-        const matchingChapters = chapters.filter(c => {
-          const idStr = c.id.toString()
-          return idStr === q || idStr.startsWith(q) ||
-                 c.name_simple?.toLowerCase().includes(q)
-        })
+        // Exact chapter match
+        const exactChapter = chapters.find(c => c.id === num)
         
-        // If exact chapter match (single result), also show its verses
-        if (matchingChapters.length === 1 && matchingChapters[0].id === num) {
-          const exactChapter = matchingChapters[0]
+        if (exactChapter) {
+          // Show the chapter + its first verses
           const previews = await loadVersePreviews(num)
-          const verseItems = Array.from({ length: exactChapter.verse_count }, (_, i) => ({
+          const verseItems = Array.from({ length: Math.min(exactChapter.verses_count, 5) }, (_, i) => ({
             chapter_id: num,
             verse_number: i + 1,
             key: `${num}:${i + 1}`,
@@ -137,9 +133,15 @@ export default {
             translation: previews[i]?.translation || '',
             chapter_name: exactChapter.name_simple
           }))
-          return [...matchingChapters, ...verseItems].slice(0, 10)
+          return [exactChapter, ...verseItems]
         }
-        return matchingChapters.slice(0, 10)
+        
+        // No exact match — search by name
+        return chapters.filter(c =>
+          c.name_simple?.toLowerCase().includes(q) ||
+          c.name_arabic.includes(q) ||
+          c.transliteration?.toLowerCase().includes(q)
+        ).slice(0, 10)
       }
       return []
     }

@@ -52,7 +52,7 @@
             <div class="flex items-center gap-3 w-full">
               <span class="flex-1 truncate text-left">{{ item.name_simple }}</span>
               <span v-if="item.name_arabic" class="text-arabic text-lg text-stone-400 dark:text-stone-600">{{ item.name_arabic }}</span>
-              <span class="text-xs text-stone-400 shrink-0">({{ item.verse_count }})</span>
+              <span class="text-xs text-stone-400 shrink-0">({{ item.verses_count }})</span>
             </div>
           </template>
         </div>
@@ -71,7 +71,7 @@ interface ChapterItem {
   id: number
   name_simple: string
   name_arabic: string
-  verse_count: number
+  verses_count: number
   transliteration?: string
 }
 
