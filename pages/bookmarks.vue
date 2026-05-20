@@ -91,6 +91,7 @@
                 <span class="text-sm font-medium text-[#18181B] dark:text-stone-100">
                   {{ getChapterName(bookmark.chapterNumber) }}
                 </span>
+                <span class="text-arabic text-lg text-stone-400 dark:text-stone-600">{{ chapterNames[bookmark.chapterNumber]?.arabic }}</span>
               </div>
 
               <!-- Arabic Preview -->
@@ -182,22 +183,38 @@ const removingId = ref<string | null>(null)
 const panelOpen = ref(false)
 const selectedVerseKey = ref('')
 
-// Preview cache and loading
-const previewCache = new Map<string, { arabic: string; translation: string }>()
+// Reactive preview cache — use object for Vue reactivity
+const previewCache = reactive<Record<string, { arabic: string; translation: string }>>({})
 const loadingPreview = ref(false)
 
-// Notes count cache
-const notesCountCache = new Map<string, number>()
+// Notes count cache — also reactive
+const notesCountCache = reactive<Record<string, number>>({})
 
 // Panel state
 const panelVerseKey = ref('')
+
+// Chapter name cache from API
+const chapterNames = ref<Record<number, { name: string; arabic: string }>>({})
+
+async function loadChapterNames() {
+  try {
+    const data = await $fetch<{ chapters: any[] }>('/api/quran/chapters')
+    const map: Record<number, { name: string; arabic: string }> = {}
+    data.chapters.forEach(c => {
+      map[c.id] = { name: c.name_simple, arabic: c.name_arabic }
+    })
+    chapterNames.value = map
+  } catch (e) {
+    // fallback: surahMeanings is used in getChapterName
+  }
+}
 
 function openPanel(bookmark: { id: string; verseKey: string; chapterNumber: number; createdAt?: string }) {
   selectedVerseKey.value = bookmark.verseKey
   panelOpen.value = true
   
   // Preload preview if not cached
-  if (!previewCache.has(bookmark.verseKey)) {
+  if (!(bookmark.verseKey in previewCache)) {
     loadVersePreview(bookmark.verseKey)
   }
 }
@@ -208,11 +225,11 @@ function closePanel() {
 }
 
 function bookmarkPreview(bookmark: { verseKey: string }): { arabic: string; translation: string } | null {
-  return previewCache.get(bookmark.verseKey) || null
+  return previewCache[bookmark.verseKey] || null
 }
 
 function bookmarkNotesCount(verseKey: string): number {
-  return notesCountCache.get(verseKey) || 0
+  return notesCountCache[verseKey] || 0
 }
 
 async function loadVersePreview(verseKey: string) {
@@ -221,10 +238,10 @@ async function loadVersePreview(verseKey: string) {
       `/api/quran/verse-preview?verse=${encodeURIComponent(verseKey)}`
     )
     if (!data.error && data.arabic) {
-      previewCache.set(verseKey, {
+      previewCache[verseKey] = {
         arabic: data.arabic,
         translation: data.translation || ''
-      })
+      }
     }
   } catch (e) {
     // Ignore errors
@@ -236,9 +253,9 @@ async function loadNotesCount(verseKey: string) {
     const data = await $fetch<{ reflections: any[] }>(
       `/api/notes/by-verse?verse=${encodeURIComponent(verseKey)}`
     )
-    notesCountCache.set(verseKey, data.reflections?.length || 0)
+    notesCountCache[verseKey] = data.reflections?.length || 0
   } catch (e) {
-    notesCountCache.set(verseKey, 0)
+    notesCountCache[verseKey] = 0
   }
 }
 
@@ -253,7 +270,7 @@ function truncateText(text: string, maxLength: number): string {
 }
 
 function getChapterName(chapterNumber: number): string {
-  return surahMeanings[chapterNumber] || `Chapter ${chapterNumber}`
+  return chapterNames.value[chapterNumber]?.name || surahMeanings[chapterNumber] || `Chapter ${chapterNumber}`
 }
 
 function formatDate(dateStr?: string): string {
@@ -288,20 +305,19 @@ function loadMore() {
 // Load previews for visible bookmarks
 watch(bookmarks, (newBookmarks) => {
   if (newBookmarks.length > 0) {
-    loadingPreview.value = true
     newBookmarks.forEach(bookmark => {
       loadVersePreview(bookmark.verseKey)
       loadNotesCount(bookmark.verseKey)
     })
-    loadingPreview.value = false
   }
 }, { immediate: true })
 
 // Fetch connection on mount
 onMounted(async () => {
+  await loadChapterNames()
   await fetchConnection()
   if (qfConnection.value?.connected) {
-    fetchBookmarks()
+    await fetchBookmarks()
   }
 })
 </script>
