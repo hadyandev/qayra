@@ -204,6 +204,7 @@ function openPanel(bookmark: { id: string; verseKey: string; chapterNumber: numb
 
 function closePanel() {
   panelOpen.value = false
+  selectedVerseKey.value = ''
 }
 
 function bookmarkPreview(bookmark: { verseKey: string }): { arabic: string; translation: string } | null {

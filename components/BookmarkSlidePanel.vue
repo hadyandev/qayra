@@ -260,6 +260,13 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString()
 }
 
+onMounted(() => {
+  if (props.isOpen && props.verseKey) {
+    loadVersePreview()
+    loadNotes()
+  }
+})
+
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen && props.verseKey) {
     loadVersePreview()
