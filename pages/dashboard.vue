@@ -71,24 +71,48 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Verse of the Day & QF Banner -->
         <div class="space-y-6">
-          <section class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-6">
-            <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-4">
-              <UIcon name="i-heroicons-sparkles" class="w-5 h-5" />
-              <span class="text-sm font-medium uppercase tracking-wider">Verse of the Day</span>
-            </div>
+          <section class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl overflow-hidden group hover:border-amber-200/60 dark:hover:border-amber-700/50 transition-all duration-500">
+            <!-- Decorative top bar -->
+            <div class="h-1 bg-gradient-to-r from-amber-400 to-amber-600 dark:from-amber-500 dark:to-amber-700"></div>
             
-            <div v-if="!featuredVerse" class="animate-pulse space-y-3">
-              <div class="h-4 bg-stone-100 dark:bg-stone-800 rounded w-3/4"></div>
+            <div v-if="!featuredVerse" class="p-6 animate-pulse space-y-3">
+              <div class="h-4 bg-stone-100 dark:bg-stone-800 rounded w-1/4"></div>
+              <div class="h-10 bg-stone-100 dark:bg-stone-800 rounded w-3/4"></div>
               <div class="h-4 bg-stone-100 dark:bg-stone-800 rounded w-1/2"></div>
             </div>
-            <VerseCard 
+            
+            <NuxtLink 
               v-else
-              :verse-key="featuredVerse.verseKey"
-              :text="featuredVerse.text"
-              :translation="featuredVerse.translation"
-              :interactive="true"
-              class="shadow-sm"
-            />
+              :to="`/quran/verse/${featuredVerse.verseKey}`"
+              class="block p-6"
+            >
+              <!-- Header -->
+              <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <UIcon name="i-heroicons-sparkles" class="w-4 h-4" />
+                  <span class="text-xs font-medium uppercase tracking-widest">Verse of the Day</span>
+                </div>
+                <span class="font-mono text-xs text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full">
+                  @{{ featuredVerse.verseKey }}
+                </span>
+              </div>
+
+              <!-- Arabic Text -->
+              <p class="text-2xl md:text-3xl font-arabic text-[#18181B] dark:text-stone-100 text-right leading-[2] mb-5" dir="rtl">
+                {{ featuredVerse.text }}
+              </p>
+
+              <!-- Translation -->
+              <p class="text-sm text-[#52525B] dark:text-stone-400 leading-relaxed border-t border-stone-100 dark:border-stone-800 pt-4">
+                {{ featuredVerse.translation }}
+              </p>
+
+              <!-- Hover hint -->
+              <div class="flex items-center gap-1.5 mt-4 text-xs text-stone-400 dark:text-stone-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <UIcon name="i-heroicons-arrow-right" class="w-3.5 h-3.5" />
+                Read full verse
+              </div>
+            </NuxtLink>
           </section>
 
           <!-- QF Connection CTA -->
@@ -315,16 +339,17 @@ async function loadFeaturedVerse() {
     // Only limit random content when the Content API itself is prelive.
     const maxChapter = isContentPrelive.value ? 2 : 114
     const randomChapter = Math.floor(Math.random() * maxChapter) + 1
-    const { verses } = await $fetch<{ verses: Array<{ verse_key: string; text_uthmani?: string; text?: string; translations?: Array<{ text: string }> }> }>(
-      `/api/quran/chapter-verses?chapter=${randomChapter}&limit=1`
+    const { verses } = await $fetch<{ verses: Array<{ key: string; text: string; translation: string }> }>(
+      `/api/quran/chapter-verses?chapterId=${randomChapter}`
     )
     if (verses?.length) {
       const verse = verses[0]
-      const translation = verse.translations?.[0]?.text || ''
+      let translation = verse.translation || ''
+      if (translation.length > 150) translation = translation.slice(0, 150) + '...'
       featuredVerse.value = {
-        verseKey: verse.verse_key,
-        text: verse.text_uthmani || verse.text || '',
-        translation: translation.length > 150 ? translation.slice(0, 150) + '...' : translation
+        verseKey: verse.key,
+        text: verse.text || '',
+        translation
       }
     }
   } catch (e) {

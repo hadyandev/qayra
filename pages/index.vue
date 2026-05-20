@@ -35,32 +35,49 @@
         </div>
       </section>
 
-      <!-- Random Verse Card -->
-      <section v-if="randomVerse" class="mb-20">
-        <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-2xl p-8 md:p-10">
-          <div class="flex items-center gap-2 text-sm text-stone-400 dark:text-stone-500 mb-4">
-            <UIcon name="i-heroicons-light-bulb" class="w-4 h-4" />
-            <span class="uppercase tracking-wider text-xs">Verse of the Moment</span>
+      <!-- Verse of the Day -->
+      <section class="mb-24">
+        <div class="max-w-3xl mx-auto text-center">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-full text-xs text-amber-600 dark:text-amber-400 font-medium uppercase tracking-widest mb-8">
+            <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5" />
+            Verse of the Day
           </div>
-          <blockquote class="text-xl md:text-2xl font-serif text-[#18181B] dark:text-stone-100 leading-relaxed mb-6">
-            "{{ randomVerse.text }}"
-          </blockquote>
-          <div class="flex items-center justify-between">
-            <NuxtLink 
-              :to="`/quran/verse/${randomVerse.verseKey}`"
-              class="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors"
-            >
-              <span class="font-mono text-sm">@{{ randomVerse.verseKey }}</span>
-              <span v-if="randomVerse.surahName" class="text-sm text-stone-500">— {{ randomVerse.surahName }}, {{ randomVerse.verseNumber }}</span>
-              <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
-            </NuxtLink>
-            <button 
-              @click="loadRandomVerse"
-              class="text-sm text-stone-400 dark:text-stone-500 hover:text-[#18181B] dark:hover:text-stone-300 transition-colors"
-            >
-              Another verse
-            </button>
+
+          <div v-if="!featuredVerse" class="animate-pulse space-y-6">
+            <div class="h-16 bg-stone-100 dark:bg-stone-800 rounded-lg w-3/4 mx-auto"></div>
+            <div class="h-4 bg-stone-100 dark:bg-stone-800 rounded w-1/2 mx-auto"></div>
+            <div class="h-10 bg-stone-100 dark:bg-stone-800 rounded w-40 mx-auto mt-8"></div>
           </div>
+
+          <template v-else>
+            <p class="text-3xl md:text-4xl lg:text-5xl font-arabic text-[#18181B] dark:text-stone-100 leading-[2.2] mb-6" dir="rtl">
+              {{ featuredVerse.text }}
+            </p>
+            <div class="w-12 h-0.5 bg-amber-300 dark:bg-amber-700 mx-auto mb-6"></div>
+            <p class="text-base md:text-lg text-[#52525B] dark:text-stone-400 leading-relaxed max-w-xl mx-auto mb-2 italic">
+              "{{ featuredVerse.translation }}"
+            </p>
+            <span class="inline-block font-mono text-xs text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full mb-10">
+              @{{ featuredVerse.verseKey }}
+            </span>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <NuxtLink 
+                :to="`/notes/new?verse=${featuredVerse.verseKey}`"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-[#18181B] dark:bg-amber-600 text-white rounded-lg font-medium text-sm hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 shadow-sm"
+              >
+                <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
+                Reflect on this verse
+              </NuxtLink>
+              <NuxtLink 
+                :to="`/quran/verse/${featuredVerse.verseKey}`"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-[#52525B] dark:text-stone-400 rounded-lg font-medium text-sm hover:text-[#18181B] dark:hover:text-stone-100 hover:border-stone-300 dark:hover:border-stone-700 transition-all duration-300"
+              >
+                <UIcon name="i-heroicons-book-open" class="w-4 h-4" />
+                Read in context
+              </NuxtLink>
+            </div>
+          </template>
         </div>
       </section>
 
@@ -206,11 +223,10 @@ watchEffect(() => {
   }
 })
 
-const randomVerse = ref<{
+const featuredVerse = ref<{
   verseKey: string
   text: string
-  surahName?: string
-  verseNumber?: number
+  translation: string
 } | null>(null)
 
 const globalStats = ref({
@@ -237,28 +253,25 @@ async function loadGlobalStats() {
 const config = useRuntimeConfig()
 const isContentPrelive = computed(() => config.public.qfContentEnv === 'prelive')
 
-async function loadRandomVerse() {
+async function loadFeaturedVerse() {
   try {
-    // Only limit random content when the Content API itself is prelive.
     const maxChapter = isContentPrelive.value ? 2 : 114
-    const chapter = Math.floor(Math.random() * maxChapter) + 1
-    const data = await $fetch(`/api/quran/chapter-verses?chapter=${chapter}&limit=1`)
-    const verses = data.verses || []
-    if (verses.length) {
+    const randomChapter = Math.floor(Math.random() * maxChapter) + 1
+    const { verses } = await $fetch<{ verses: Array<{ key: string; text: string; translation: string }> }>(
+      `/api/quran/chapter-verses?chapterId=${randomChapter}`
+    )
+    if (verses?.length) {
       const verse = verses[0]
-      const translation = verse.translations?.[0]?.text || verse.text
-      const chaptersData = await $fetch('/api/chapters')
-      const chapters = chaptersData.chapters || []
-      const chapterInfo = chapters.find((c) => c.id === chapter)
-      randomVerse.value = {
-        verseKey: verse.verse_key,
-        text: translation.length > 150 ? translation.slice(0, 150) + '...' : translation,
-        surahName: chapterInfo?.name_simple,
-        verseNumber: verse.verse_number || parseInt(verse.verse_key.split(':')[1])
+      let translation = verse.translation || ''
+      if (translation.length > 150) translation = translation.slice(0, 150) + '...'
+      featuredVerse.value = {
+        verseKey: verse.key,
+        text: verse.text || '',
+        translation
       }
     }
   } catch (e) {
-    console.error('Failed to load random verse:', e)
+    console.error('Failed to load featured verse:', e)
   }
 }
 
@@ -273,7 +286,7 @@ function handleScroll() {
 }
 
 onMounted(() => {
-  loadRandomVerse()
+  loadFeaturedVerse()
   loadGlobalStats()
   window.addEventListener('scroll', handleScroll)
 })
