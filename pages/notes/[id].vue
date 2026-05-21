@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
+  <div class="min-h-[calc(100vh-5rem)]">
     <div v-if="loading" class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-4">
         <div class="w-12 h-12 rounded-full border-2 border-stone-200 dark:border-stone-700 border-t-amber-500 animate-spin"></div>
@@ -8,7 +8,7 @@
     </div>
 
     <template v-else-if="note">
-      <div class="max-w-3xl mx-auto px-6 py-12">
+      <div class="max-w-6xl mx-auto px-6 py-12">
         <!-- Header -->
         <header class="mb-12">
           <NuxtLink 

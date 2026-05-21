@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
+  <div class="min-h-[calc(100vh-5rem)]">
     <div class="max-w-6xl mx-auto px-6 py-12">
       <NuxtLink 
         to="/heatmap" 

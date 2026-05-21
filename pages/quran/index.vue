@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
+  <div class="min-h-[calc(100vh-5rem)]">
     <header class="pt-16 pb-8 px-6 max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
         <div>

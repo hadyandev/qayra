@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950 flex items-center justify-center px-6">
+  <div class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-6">
     <div class="text-center">
       <div class="relative w-16 h-16 mx-auto mb-6">
         <div class="absolute inset-0 rounded-full border-2 border-stone-200 dark:border-stone-700"></div>

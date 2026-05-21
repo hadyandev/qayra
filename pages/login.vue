@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950 flex items-center justify-center px-6">
+  <div class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-6">
     <div class="w-full max-w-md">
       <div class="bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-[2rem] p-8 md:p-10 ring-1 ring-stone-200/30 dark:ring-stone-800/30">
         <header class="text-center mb-10">

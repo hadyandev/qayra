@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
-    <div class="max-w-3xl mx-auto px-6 py-12">
+  <div class="min-h-[calc(100vh-5rem)]">
+    <div class="max-w-6xl mx-auto px-6 py-12">
       <header class="mb-10">
         <h1 class="text-3xl font-light text-[#18181B] dark:text-stone-100 tracking-tight">Your Profile</h1>
         <p class="text-stone-500 dark:text-stone-400 mt-1">Manage your identity, preferences, and connections.</p>

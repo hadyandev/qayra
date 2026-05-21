@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-[#FAF9F6] dark:bg-stone-950 font-sans transition-colors duration-300">
-    <header class="pt-24 pb-12 px-6 max-w-5xl mx-auto">
+  <div class="min-h-screen">
+    <header class="pt-24 pb-12 px-6 max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div class="space-y-4">
           <h1 class="text-4xl md:text-5xl font-light text-[#18181B] dark:text-stone-100 tracking-tight font-display">

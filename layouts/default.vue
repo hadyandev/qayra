@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col bg-[#FAF9F6] dark:bg-stone-950 font-sans transition-colors duration-500">
     <header class="fixed top-0 inset-x-0 z-50 px-4 pt-4">
-      <nav class="max-w-5xl mx-auto bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border border-stone-200/60 dark:border-stone-800/60 rounded-[1.25rem] px-2 py-1.5 shadow-sm ring-1 ring-stone-200/30 dark:ring-stone-800/30 transition-all duration-300">
+      <nav class="max-w-6xl mx-auto bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border border-stone-200/60 dark:border-stone-800/60 rounded-[1.25rem] px-2 py-1.5 shadow-sm ring-1 ring-stone-200/30 dark:ring-stone-800/30 transition-all duration-300">
         <div class="flex items-center justify-between gap-2">
           <NuxtLink to="/" class="flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 hover:bg-stone-100 dark:hover:bg-stone-800 group">
             <Logo size="md" />
@@ -9,16 +9,18 @@
           
           <!-- Right side: Nav Links + Search + Theme + User -->
           <div class="flex items-center gap-1">
-            <!-- Nav Links -->
-            <NuxtLink
-              v-for="link in navLinks"
-              :key="link.to"
-              :to="link.to"
-              class="px-3 py-2 text-sm font-medium text-[#52525B] dark:text-stone-400 rounded-full transition-all duration-300 hover:bg-stone-100 dark:hover:bg-stone-800"
-              :class="{ 'bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100': isActive(link.to) }"
-            >
-              {{ link.label }}
-            </NuxtLink>
+            <!-- Desktop Nav Links (hidden on mobile) -->
+            <div class="hidden md:flex items-center gap-1">
+              <NuxtLink
+                v-for="link in navLinks"
+                :key="link.to"
+                :to="link.to"
+                class="px-3 py-2 text-sm font-medium text-[#52525B] dark:text-stone-400 rounded-full transition-all duration-300 hover:bg-stone-100 dark:hover:bg-stone-800"
+                :class="{ 'bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100': isActive(link.to) }"
+              >
+                {{ link.label }}
+              </NuxtLink>
+            </div>
             
             <!-- Search (Icon only) -->
             <button
@@ -40,16 +42,17 @@
                 class="w-5 h-5 transition-transform duration-300" 
               />
             </button>
-            
+
+            <!-- Sign in (desktop only; mobile is in hamburger drawer) -->
             <NuxtLink
-              v-if="!user" 
+              v-if="!user"
               to="/login"
-              class="px-4 py-2 text-sm font-medium text-white bg-[#18181B] dark:bg-amber-600 rounded-full hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 hover:scale-105 active:scale-95"
+              class="hidden md:inline-flex px-4 py-2 text-sm font-medium text-white bg-[#18181B] dark:bg-amber-600 rounded-full hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 hover:scale-105 active:scale-95"
             >
               Sign in
             </NuxtLink>
             
-            <div v-else class="relative" ref="userMenuRef">
+            <div v-if="user" class="relative" ref="userMenuRef">
               <button 
                 @click="showUserMenu = !showUserMenu"
                 class="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
@@ -59,7 +62,7 @@
                     {{ userEmail.charAt(0).toUpperCase() }}
                   </span>
                 </div>
-                <UIcon name="i-heroicons-chevron-down" class="w-4 h-4 text-stone-400" />
+                <UIcon name="i-heroicons-chevron-down" class="hidden md:block w-4 h-4 text-stone-400" />
               </button>
               
               <Transition name="dropdown">
@@ -118,8 +121,47 @@
                 </div>
               </Transition>
             </div>
+
+            <!-- Hamburger button (mobile only) -->
+            <button
+              @click="showMobileMenu = !showMobileMenu"
+              class="md:hidden p-2 rounded-full text-[#52525B] dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300"
+              aria-label="Menu"
+            >
+              <UIcon :name="showMobileMenu ? 'i-heroicons-x-mark' : 'i-heroicons-bars-3'" class="w-5 h-5" />
+            </button>
           </div>
         </div>
+
+        <!-- Mobile drawer -->
+        <Transition name="dropdown">
+          <div
+            v-if="showMobileMenu"
+            class="md:hidden border-t border-stone-200/60 dark:border-stone-800/60 mt-1.5 pt-1.5 pb-2 px-2 space-y-1"
+          >
+            <NuxtLink
+              v-for="link in navLinks"
+              :key="link.to"
+              :to="link.to"
+              class="block px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300"
+              :class="isActive(link.to)
+                ? 'bg-stone-100 dark:bg-stone-800 text-[#18181B] dark:text-stone-100'
+                : 'text-[#52525B] dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50'"
+              @click="showMobileMenu = false"
+            >
+              {{ link.label }}
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="!user"
+              to="/login"
+              class="block w-full text-center px-4 py-2.5 text-sm font-medium text-white bg-[#18181B] dark:bg-amber-600 rounded-xl hover:bg-[#3f3f46] dark:hover:bg-amber-500 transition-all duration-300 mt-2"
+              @click="showMobileMenu = false"
+            >
+              Sign in
+            </NuxtLink>
+          </div>
+        </Transition>
       </nav>
     </header>
     
@@ -129,7 +171,7 @@
     
     <!-- Footer - same as homepage -->
     <footer class="mt-auto py-8 border-t border-stone-200 dark:border-stone-800">
-      <div class="max-w-5xl mx-auto px-6">
+      <div class="max-w-6xl mx-auto px-6">
         <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#52525B] dark:text-stone-400">
           <p>Qayra — A Quran Learning Workspace</p>
           <div class="flex items-center gap-6">
@@ -177,6 +219,7 @@ const client = useSupabaseClient()
 const colorMode = useColorMode()
 const { open: openCommandPalette } = useCommandPalette()
 const showUserMenu = ref(false)
+const showMobileMenu = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
 const showQfModal = ref(false)
 

@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-[calc(100vh-5rem)] bg-[#FAF9F6] dark:bg-stone-950">
-    <div class="max-w-5xl mx-auto px-6 py-16 md:py-24">
+  <div class="min-h-[calc(100vh-5rem)]">
+    <div class="max-w-6xl mx-auto px-6 py-16 md:py-24">
       
       <!-- SECTION 1: HERO -->
       <section class="text-center mb-24">
