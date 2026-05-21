@@ -129,6 +129,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useCommandPalette } from '~/composables/useCommandPalette'
 
 type VerseResult = {
   verseKey: string
@@ -157,9 +158,9 @@ function highlightMatch(text: string) {
   return cleanText.replace(regex, '<span class="bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 px-0.5 rounded">$1</span>')
 }
 
+const { isOpen, query, open, close, toggle, registerInputFocus } = useCommandPalette()
+
 const user = useSupabaseUser()
-const isOpen = ref(false)
-const query = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
 const selectedIndex = ref(0)
 const isLoading = ref(false)
@@ -169,26 +170,6 @@ const results = reactive({
   verses: [] as VerseResult[],
   notes: [] as NoteResult[]
 })
-
-function open() {
-  isOpen.value = true
-  query.value = ''
-  nextTick(() => inputRefFocusFn?.())
-}
-
-function close() {
-  isOpen.value = false
-}
-
-function toggle() {
-  isOpen.value ? close() : open()
-}
-
-let inputRefFocusFn: (() => void) | null = null
-
-function registerInputFocus(fn: () => void) {
-  inputRefFocusFn = fn
-}
 
 const versePreviewCache = new Map<string, any[]>()
 
